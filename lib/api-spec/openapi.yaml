@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Music Rhythm Analysis API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: analysis
+    description: Music analysis operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,97 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /analyze:
+    post:
+      operationId: analyzeMusic
+      tags: [analysis]
+      summary: Analyze music from a URL
+      description: Accepts a song URL and returns rhythmic analysis data including BPM, beat patterns, frequency spectrum, and cellular resonance assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeMusicBody"
+      responses:
+        "200":
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MusicAnalysis"
+        "400":
+          description: Invalid URL or unsupported format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Analysis failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analyses:
+    get:
+      operationId: getRecentAnalyses
+      tags: [analysis]
+      summary: Get recent analyses
+      description: Returns a list of recent music analyses
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: List of recent analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MusicAnalysisSummary"
+  /analyses/{id}:
+    get:
+      operationId: getAnalysis
+      tags: [analysis]
+      summary: Get a specific analysis by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Analysis details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MusicAnalysis"
+        "404":
+          description: Analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analyses/stats:
+    get:
+      operationId: getAnalysisStats
+      tags: [analysis]
+      summary: Get aggregated analysis statistics
+      description: Returns summary statistics across all analyses
+      responses:
+        "200":
+          description: Analysis statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisStats"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +126,213 @@ components:
           type: string
       required:
         - status
-
+    AnalyzeMusicBody:
+      type: object
+      properties:
+        url:
+          type: string
+          description: URL of the song to analyze (YouTube, SoundCloud, or direct audio link)
+      required:
+        - url
+    MusicAnalysis:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        title:
+          type: string
+        bpm:
+          type: number
+          description: Beats per minute
+        key:
+          type: string
+          description: Musical key (e.g. C major, A minor)
+        energy:
+          type: number
+          description: Energy level 0-1
+        danceability:
+          type: number
+          description: Danceability score 0-1
+        dominantFrequency:
+          type: number
+          description: Dominant frequency in Hz
+        frequencySpectrum:
+          type: array
+          items:
+            $ref: "#/components/schemas/FrequencyBand"
+        beatPattern:
+          type: array
+          items:
+            type: number
+          description: Beat intervals in seconds
+        tempoChanges:
+          type: array
+          items:
+            $ref: "#/components/schemas/TempoChange"
+        cellularResonance:
+          $ref: "#/components/schemas/CellularResonance"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - url
+        - title
+        - bpm
+        - key
+        - energy
+        - danceability
+        - dominantFrequency
+        - frequencySpectrum
+        - beatPattern
+        - tempoChanges
+        - cellularResonance
+        - createdAt
+    FrequencyBand:
+      type: object
+      properties:
+        label:
+          type: string
+          description: Band label (e.g. Sub Bass, Bass, Low Mid, Mid, Upper Mid, Presence, Brilliance)
+        minHz:
+          type: number
+        maxHz:
+          type: number
+        amplitude:
+          type: number
+          description: Average amplitude 0-1
+      required:
+        - label
+        - minHz
+        - maxHz
+        - amplitude
+    TempoChange:
+      type: object
+      properties:
+        timestamp:
+          type: number
+          description: Time in seconds
+        bpm:
+          type: number
+      required:
+        - timestamp
+        - bpm
+    CellularResonance:
+      type: object
+      properties:
+        score:
+          type: number
+          description: Overall cellular resonance score 0-100
+        healingFrequencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealingFrequency"
+        assessment:
+          type: string
+          description: Human-readable assessment of cellular impact
+        category:
+          type: string
+          enum: [highly_beneficial, beneficial, neutral, potentially_harmful]
+      required:
+        - score
+        - healingFrequencies
+        - assessment
+        - category
+    HealingFrequency:
+      type: object
+      properties:
+        frequency:
+          type: number
+          description: Frequency in Hz
+        name:
+          type: string
+          description: Name of the healing frequency (e.g. Solfeggio 528 Hz)
+        presence:
+          type: number
+          description: Presence strength 0-1
+        benefit:
+          type: string
+          description: Associated health benefit
+      required:
+        - frequency
+        - name
+        - presence
+        - benefit
+    MusicAnalysisSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        url:
+          type: string
+        bpm:
+          type: number
+        key:
+          type: string
+        energy:
+          type: number
+        cellularScore:
+          type: number
+        category:
+          type: string
+          enum: [highly_beneficial, beneficial, neutral, potentially_harmful]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - url
+        - bpm
+        - key
+        - energy
+        - cellularScore
+        - category
+        - createdAt
+    AnalysisStats:
+      type: object
+      properties:
+        totalAnalyses:
+          type: integer
+        averageBpm:
+          type: number
+        averageCellularScore:
+          type: number
+        topHealingFrequency:
+          type: string
+        categoryBreakdown:
+          type: object
+          properties:
+            highly_beneficial:
+              type: integer
+            beneficial:
+              type: integer
+            neutral:
+              type: integer
+            potentially_harmful:
+              type: integer
+          required:
+            - highly_beneficial
+            - beneficial
+            - neutral
+            - potentially_harmful
+      required:
+        - totalAnalyses
+        - averageBpm
+        - averageCellularScore
+        - topHealingFrequency
+        - categoryBreakdown
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
