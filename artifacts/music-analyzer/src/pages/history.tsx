@@ -1,95 +1,127 @@
 import { useGetRecentAnalyses } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { format } from "date-fns";
-import { Activity, Clock, Music, ArrowRight, Disc } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BpmIcon, MusicNoteIcon, ArrowRightIcon, HistoryIcon, WaveformIcon } from "@/components/icons";
+
+function CategoryDot({ category }: { category: string }) {
+  const map: Record<string, string> = {
+    highly_beneficial: "bg-emerald-500",
+    beneficial: "bg-primary",
+    neutral: "bg-amber-500",
+    potentially_harmful: "bg-red-500",
+  };
+  return <span className={`w-2 h-2 rounded-full ${map[category] ?? "bg-muted"}`} />;
+}
+
+function ScoreBadge({ score, category }: { score: number; category: string }) {
+  const map: Record<string, string> = {
+    highly_beneficial: "bg-emerald-500/12 text-emerald-600 border-emerald-500/25 dark:text-emerald-400",
+    beneficial: "bg-primary/12 text-primary border-primary/25",
+    neutral: "bg-amber-500/12 text-amber-600 border-amber-500/25 dark:text-amber-400",
+    potentially_harmful: "bg-red-500/12 text-red-600 border-red-500/25 dark:text-red-400",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${map[category] ?? ""}`}>
+      <CategoryDot category={category} />
+      Score: {Math.round(score)}
+    </span>
+  );
+}
 
 export default function History() {
   const { data: analyses, isLoading } = useGetRecentAnalyses({ limit: 20 });
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-    if (score >= 60) return "text-blue-500 bg-blue-500/10 border-blue-500/20";
-    if (score >= 40) return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20";
-    return "text-red-500 bg-red-500/10 border-red-500/20";
-  };
-
   return (
-    <div className="space-y-8 pb-12">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analysis History</h1>
-        <p className="text-muted-foreground mt-2">Past rhythmic and cellular resonance analyses</p>
-      </div>
+    <div className="space-y-8 pt-8 pb-16">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <HistoryIcon className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight">Analysis History</h1>
+            <p className="text-sm text-muted-foreground">Past rhythmic and cellular resonance analyses</p>
+          </div>
+        </div>
+        <Link href="/">
+          <Button variant="outline" className="gap-2 rounded-xl h-9 text-sm" data-testid="button-new-analysis">
+            <WaveformIcon className="w-4 h-4" />
+            New Analysis
+          </Button>
+        </Link>
+      </motion.div>
 
+      {/* Content */}
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="bg-card/50 backdrop-blur border-border/50">
-              <CardHeader className="pb-2">
-                <Skeleton className="h-5 w-2/3 mb-2" />
-                <Skeleton className="h-4 w-1/3" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-8 w-16 rounded-full" />
-                    <Skeleton className="h-8 w-16 rounded-full" />
-                  </div>
-                  <Skeleton className="h-8 w-full mt-4" />
-                </div>
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-48 rounded-2xl" />
           ))}
         </div>
-      ) : analyses?.length === 0 ? (
-        <Card className="bg-card/50 backdrop-blur border-border/50 text-center py-12">
-          <CardContent className="flex flex-col items-center">
-            <Disc className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-            <h3 className="text-lg font-medium">No analyses yet</h3>
-            <p className="text-muted-foreground mt-1 mb-4">Start by analyzing your first track.</p>
-            <Link href="/" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+      ) : !analyses?.length ? (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-24 text-center gap-4"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
+            <HistoryIcon className="w-8 h-8 text-muted-foreground/50" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">No analyses yet</h3>
+            <p className="text-sm text-muted-foreground mt-1">Analyze your first track to see it here.</p>
+          </div>
+          <Link href="/">
+            <Button className="mt-2 gap-2 rounded-xl">
+              <WaveformIcon className="w-4 h-4" />
               Analyze a track
-            </Link>
-          </CardContent>
-        </Card>
+            </Button>
+          </Link>
+        </motion.div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {analyses?.map((analysis, index) => (
+          {analyses.map((analysis, index) => (
             <motion.div
               key={analysis.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: index * 0.04, ease: "easeOut" }}
             >
-              <Link href={`/analysis/${analysis.id}`}>
-                <Card className="h-full bg-card/50 backdrop-blur border-border/50 hover:bg-accent/50 transition-all cursor-pointer group glow-card">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="line-clamp-1 group-hover:text-primary transition-colors text-lg">
+              <Link href={`/analysis/${analysis.id}`} data-testid={`card-analysis-${analysis.id}`}>
+                <Card className="glass-card border-0 rounded-2xl h-full cursor-pointer group hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                  <CardHeader className="pb-2 pt-5 px-5">
+                    <CardTitle className="text-base font-semibold line-clamp-1 group-hover:text-primary transition-colors leading-snug">
                       {analysis.title}
                     </CardTitle>
-                    <CardDescription className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {format(new Date(analysis.createdAt), 'MMM d, yyyy • h:mm a')}
+                    <CardDescription className="text-xs flex items-center gap-1.5 mt-0.5">
+                      {format(new Date(analysis.createdAt), "MMM d, yyyy · h:mm a")}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <Badge variant="secondary" className="bg-secondary/50 font-mono">
+                  <CardContent className="px-5 pb-5 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="gap-1 text-xs font-medium rounded-lg">
+                        <BpmIcon className="w-3 h-3" />
                         {Math.round(analysis.bpm)} BPM
                       </Badge>
-                      <Badge variant="secondary" className="bg-secondary/50">
-                        Key: {analysis.key}
-                      </Badge>
-                      <Badge variant="outline" className={getScoreColor(analysis.cellularScore)}>
-                        Resonance: {Math.round(analysis.cellularScore)}
+                      <Badge variant="secondary" className="gap-1 text-xs font-medium rounded-lg">
+                        <MusicNoteIcon className="w-3 h-3" />
+                        {analysis.key}
                       </Badge>
                     </div>
-                    <div className="flex items-center text-sm text-primary font-medium group-hover:underline mt-auto">
-                      View details
-                      <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    <ScoreBadge score={analysis.cellularScore} category={analysis.category} />
+                    <div className="flex items-center gap-1 text-xs text-primary font-medium mt-1 group-hover:gap-2 transition-all">
+                      View full analysis
+                      <ArrowRightIcon className="w-3.5 h-3.5" />
                     </div>
                   </CardContent>
                 </Card>
