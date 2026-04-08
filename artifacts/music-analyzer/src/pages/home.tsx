@@ -1,38 +1,30 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAnalyzeMusic } from "@workspace/api-client-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   WaveformIcon, MusicNoteIcon, SparkleIcon, AlertIcon,
   YoutubeIcon, SoundCloudIcon, DnaIcon, FrequencyIcon,
-  CellIcon, ArrowRightIcon
+  CellIcon, PlaylistIcon, HeadphonesIcon, FilmIcon
 } from "@/components/icons";
 
-function Tab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+
+/* ── Stagger wrapper ── */
+function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
-    <button
-      onClick={onClick}
-      className={`relative px-5 py-2 text-sm font-semibold rounded-xl transition-all duration-200 ${
-        active
-          ? "text-foreground"
-          : "text-muted-foreground hover:text-foreground/70"
-      }`}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.55, delay, ease: [0.32, 0.72, 0, 1] }}
+      className={className}
     >
-      {active && (
-        <motion.div
-          layoutId="tab-bg"
-          className="absolute inset-0 rounded-xl bg-background shadow-sm border border-border/50"
-          transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
-        />
-      )}
-      <span className="relative z-10">{label}</span>
-    </button>
+      {children}
+    </motion.div>
   );
 }
 
+/* ── Single Track Analyzer ── */
 function SingleAnalyzer() {
   const [url, setUrl] = useState("");
   const [, setLocation] = useLocation();
@@ -48,266 +40,321 @@ function SingleAnalyzer() {
   };
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleAnalyze}>
-        <div className="relative flex items-center gap-2 bg-background/70 backdrop-blur-md rounded-2xl border border-border/60 p-2 shadow-lg focus-within:border-primary/40 focus-within:shadow-primary/10 focus-within:shadow-xl transition-all duration-300">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 ml-1">
-            <MusicNoteIcon className="w-5 h-5 text-primary" />
-          </div>
-          <Input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="Paste a YouTube or SoundCloud link..."
-            className="flex-1 h-11 border-0 bg-transparent text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
-            data-testid="input-url"
-            disabled={analyzeMutation.isPending}
-            autoComplete="off"
-          />
-          <Button
-            type="submit"
-            size="lg"
-            className="h-11 px-6 rounded-xl font-semibold text-sm gap-2 shrink-0"
-            disabled={!url.trim() || analyzeMutation.isPending}
-            data-testid="button-analyze"
-          >
-            <AnimatePresence mode="wait">
-              {analyzeMutation.isPending ? (
-                <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                  <WaveformIcon className="w-4 h-4 animate-pulse" /> Analyzing...
-                </motion.span>
-              ) : (
-                <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                  <SparkleIcon className="w-4 h-4" /> Analyze
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Button>
+    <form onSubmit={handleAnalyze} className="space-y-3">
+      {/* URL input */}
+      <div className={`relative flex items-center gap-2 bg-card border rounded-xl p-1.5 shadow-md transition-all duration-300 ${
+        analyzeMutation.isPending
+          ? "border-primary/40 shadow-primary/10"
+          : "border-border/80 hover:border-border focus-within:border-primary/50 focus-within:shadow-primary/8"
+      }`}>
+        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 ml-0.5">
+          <MusicNoteIcon className="w-4 h-4 text-primary" />
         </div>
-      </form>
-
-      <AnimatePresence>
-        {analyzeMutation.isError && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-            className="flex items-start gap-3 p-4 rounded-xl bg-destructive/8 border border-destructive/20 text-sm"
-          >
-            <AlertIcon className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-destructive text-xs uppercase tracking-wide">Analysis Failed</p>
-              <p className="text-muted-foreground mt-0.5 text-xs">
-                {(analyzeMutation.error as Error)?.message || "Could not analyze this URL. Verify the link and try again."}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="flex items-center gap-3 pt-1">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
-          <YoutubeIcon className="w-3.5 h-3.5 text-red-500/70" /> YouTube
-        </div>
-        <div className="w-px h-3 bg-border" />
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
-          <SoundCloudIcon className="w-3.5 h-3.5 text-orange-500/70" /> SoundCloud
-        </div>
-        <div className="w-px h-3 bg-border" />
-        <span className="text-xs text-muted-foreground/70">Direct audio links</span>
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Paste a YouTube, SoundCloud, or audio URL…"
+          className="flex-1 bg-transparent text-[14px] font-medium placeholder:text-muted-foreground/45 outline-none text-foreground min-w-0 py-1"
+          data-testid="input-url"
+          disabled={analyzeMutation.isPending}
+          autoComplete="off"
+        />
+        <motion.button
+          type="submit"
+          disabled={!url.trim() || analyzeMutation.isPending}
+          whileTap={{ scale: 0.97 }}
+          className="flex items-center gap-2 h-9 px-5 bg-primary text-primary-foreground rounded-lg text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:opacity-90 shrink-0"
+          data-testid="button-analyze"
+        >
+          <AnimatePresence mode="wait">
+            {analyzeMutation.isPending ? (
+              <motion.span key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                <WaveformIcon className="w-3.5 h-3.5 animate-pulse" />
+                Analyzing
+              </motion.span>
+            ) : (
+              <motion.span key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                <SparkleIcon className="w-3.5 h-3.5" />
+                Analyze
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
       </div>
-    </div>
+
+      {analyzeMutation.isError && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 text-destructive text-[13px] px-2"
+        >
+          <AlertIcon className="w-4 h-4 shrink-0" />
+          <span>Could not analyze this URL. Check the link and try again.</span>
+        </motion.div>
+      )}
+
+      {/* Source hints */}
+      <div className="flex items-center gap-3 px-1.5">
+        <span className="label-xs">supports</span>
+        <div className="flex items-center gap-3">
+          {[
+            { Icon: YoutubeIcon, label: "YouTube", color: "text-red-500" },
+            { Icon: SoundCloudIcon, label: "SoundCloud", color: "text-orange-500" },
+            { Icon: MusicNoteIcon, label: "Direct audio", color: "text-muted-foreground" },
+          ].map(({ Icon, label, color }) => (
+            <div key={label} className={`flex items-center gap-1.5 text-[12px] font-medium ${color}`}>
+              <Icon className="w-3 h-3" />
+              <span className="hidden sm:inline">{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </form>
   );
 }
 
+/* ── Playlist Analyzer ── */
 function PlaylistAnalyzer() {
   const [urls, setUrls] = useState("");
   const [, setLocation] = useLocation();
-  const [isPending, setIsPending] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
-    const urlList = urls.split("\n").map(u => u.trim()).filter(Boolean);
-    if (urlList.length === 0 || isPending) return;
-    if (urlList.length > 20) {
-      setError("Maximum 20 URLs per batch. Please remove some links.");
-      return;
-    }
-
-    setIsPending(true);
+    const lines = urls.split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+    if (lines.length > 20) { setError("Maximum 20 URLs at once"); return; }
     setError(null);
+    setLoading(true);
     try {
-      const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
-      const resp = await fetch(`${BASE_URL}/api/analyze-playlist`, {
+      const res = await fetch(`${BASE_URL}/api/analyze-playlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls: urlList }),
+        body: JSON.stringify({ urls: lines }),
       });
-      if (!resp.ok) throw new Error("Playlist analysis failed");
-      const data = await resp.json();
+      const data = await res.json();
       sessionStorage.setItem("playlist_results", JSON.stringify(data));
       setLocation("/playlist");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Playlist analysis failed");
+    } catch {
+      setError("Analysis failed. Please check your URLs.");
     } finally {
-      setIsPending(false);
+      setLoading(false);
     }
   };
 
-  const urlCount = urls.split("\n").filter(l => l.trim()).length;
+  const lineCount = urls.split("\n").filter(l => l.trim()).length;
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleAnalyze} className="space-y-3">
-        <div className="relative rounded-2xl border border-border/60 bg-background/70 backdrop-blur-md overflow-hidden focus-within:border-primary/40 transition-all duration-300 shadow-lg focus-within:shadow-primary/10 focus-within:shadow-xl">
-          <Textarea
-            value={urls}
-            onChange={(e) => setUrls(e.target.value)}
-            placeholder={"Paste one URL per line:\nhttps://youtube.com/watch?v=...\nhttps://youtube.com/watch?v=...\nhttps://soundcloud.com/..."}
-            className="min-h-[140px] border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/40 resize-none p-4 font-mono leading-relaxed"
-            disabled={isPending}
-          />
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/40 bg-muted/20">
-            <span className="text-xs text-muted-foreground">
-              {urlCount > 0 ? `${urlCount} URL${urlCount > 1 ? "s" : ""} detected` : "One URL per line · Max 20 tracks"}
-            </span>
-            <Button
-              type="submit"
-              size="sm"
-              className="h-8 px-5 rounded-lg font-semibold text-xs gap-1.5"
-              disabled={urlCount === 0 || isPending}
-            >
-              {isPending ? (
-                <span className="flex items-center gap-1.5"><WaveformIcon className="w-3.5 h-3.5 animate-pulse" />Analyzing {urlCount}...</span>
-              ) : (
-                <span className="flex items-center gap-1.5"><SparkleIcon className="w-3.5 h-3.5" />Analyze Playlist</span>
-              )}
-            </Button>
-          </div>
-        </div>
-      </form>
-
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-            className="flex items-start gap-3 p-4 rounded-xl bg-destructive/8 border border-destructive/20 text-sm"
+    <form onSubmit={handleAnalyze} className="space-y-3">
+      <div className={`relative bg-card border rounded-xl overflow-hidden shadow-md transition-all duration-300 ${
+        loading ? "border-primary/40" : "border-border/80 focus-within:border-primary/50"
+      }`}>
+        <textarea
+          value={urls}
+          onChange={(e) => setUrls(e.target.value)}
+          placeholder={"Paste URLs, one per line…\n\nhttps://youtube.com/watch?v=…\nhttps://soundcloud.com/…"}
+          rows={5}
+          disabled={loading}
+          className="w-full bg-transparent text-[13px] font-mono-custom placeholder:text-muted-foreground/35 placeholder:font-sans outline-none text-foreground resize-none p-4 leading-relaxed"
+          data-testid="input-urls"
+        />
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/60 bg-muted/20">
+          <span className="label-xs">{lineCount > 0 ? `${lineCount} / 20 URLs` : "Up to 20 tracks"}</span>
+          <motion.button
+            type="submit"
+            disabled={lineCount === 0 || loading}
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-2 h-8 px-4 bg-primary text-primary-foreground rounded-lg text-[12px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
           >
-            <AlertIcon className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground">{error}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            {loading ? (
+              <><WaveformIcon className="w-3 h-3 animate-pulse" />Analyzing {lineCount} tracks…</>
+            ) : (
+              <><PlaylistIcon className="w-3 h-3" />Analyze Playlist</>
+            )}
+          </motion.button>
+        </div>
+      </div>
+      {error && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-destructive text-[13px] px-1">
+          <AlertIcon className="w-4 h-4 shrink-0" />
+          {error}
+        </motion.div>
+      )}
+    </form>
   );
 }
 
+/* ── Features ── */
 const FEATURES = [
-  { icon: FrequencyIcon, label: "Frequency Analysis", desc: "7-band spectrum from sub-bass to brilliance", color: "text-blue-500", bg: "bg-blue-500/8" },
-  { icon: DnaIcon, label: "Cellular Resonance", desc: "Solfeggio & healing frequency alignment", color: "text-violet-500", bg: "bg-violet-500/8" },
-  { icon: CellIcon, label: "Biofield Impact", desc: "Scientific assessment of cellular interaction", color: "text-emerald-500", bg: "bg-emerald-500/8" },
-  { icon: MusicNoteIcon, label: "Lyrics + Animations", desc: "Get lyrics with animated video editor export", color: "text-amber-500", bg: "bg-amber-500/8" },
+  { num: "01", label: "Tempo & BPM", desc: "Precise beat-per-minute detection with tempo variation mapping", Icon: WaveformIcon, color: "text-violet-500 dark:text-violet-400", bg: "bg-violet-500/10" },
+  { num: "02", label: "Musical Key", desc: "Root key and scale identification using harmonic analysis", Icon: MusicNoteIcon, color: "text-sky-500 dark:text-sky-400", bg: "bg-sky-500/10" },
+  { num: "03", label: "7-Band Spectrum", desc: "Sub-bass to presence frequency energy distribution", Icon: FrequencyIcon, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-500/10" },
+  { num: "04", label: "Cellular Resonance", desc: "Solfeggio alignment score measuring bioacoustic impact", Icon: CellIcon, color: "text-emerald-500 dark:text-emerald-400", bg: "bg-emerald-500/10" },
+  { num: "05", label: "Healing Frequencies", desc: "Alignment with 396, 432, 528, 639, 741, 852, 963 Hz", Icon: DnaIcon, color: "text-pink-500 dark:text-pink-400", bg: "bg-pink-500/10" },
+  { num: "06", label: "Lyrics + Video", desc: "Animated lyrics editor with 1080p WebM export for editors", Icon: FilmIcon, color: "text-indigo-500 dark:text-indigo-400", bg: "bg-indigo-500/10" },
 ];
 
-export default function Home() {
-  const [tab, setTab] = useState<"single" | "playlist">("single");
+/* ── Ticker items ── */
+const TICKER = ["BPM Detection", "Solfeggio Alignment", "Frequency Spectrum", "Cellular Resonance", "Healing Tones", "Batch Analysis", "Lyrics Studio", "1080p Export", "Dark Mode", "Real-time Analysis"];
+
+export default function HomePage() {
+  const [mode, setMode] = useState<"single" | "playlist">("single");
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-8rem)]">
-      {/* Hero */}
-      <div className="flex flex-col items-center text-center pt-16 pb-10 px-4 max-w-3xl mx-auto w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-semibold mb-7 tracking-wide uppercase">
-            <SparkleIcon className="w-3.5 h-3.5" />
-            Music Rhythm &amp; Cellular Science
+    <div className="py-10 sm:py-16 space-y-16">
+      {/* ── Hero ── */}
+      <div className="space-y-8">
+        {/* Badge */}
+        <FadeIn delay={0}>
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+              </span>
+              <span className="text-[11px] font-mono-custom font-medium text-primary tracking-widest uppercase">Signal Analysis Engine</span>
+            </div>
           </div>
+        </FadeIn>
 
-          <h1 className="font-display text-5xl sm:text-6xl md:text-[4.5rem] font-bold tracking-tight leading-[1.04] mb-6">
-            Discover the
-            <br />
-            <span className="gradient-text">Hidden Physics</span>
-            <br />
-            of Sound
+        {/* Headline */}
+        <FadeIn delay={0.06}>
+          <h1 className="font-display font-bold tracking-tight leading-[1.05]">
+            <span className="block text-[clamp(2.6rem,7vw,5rem)] text-foreground">
+              Decode the
+            </span>
+            <span className="block text-[clamp(2.6rem,7vw,5rem)] gradient-text">
+              physics of sound.
+            </span>
           </h1>
+        </FadeIn>
 
-          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10">
-            Analyze any song's BPM, frequency spectrum, cellular resonance, and get
-            animated lyrics — perfect for music producers and video editors.
+        <FadeIn delay={0.1}>
+          <p className="text-[15px] sm:text-[16px] text-muted-foreground leading-relaxed max-w-xl font-body">
+            Paste any music URL for instant BPM, key, frequency spectrum, and
+            cellular resonance analysis — plus an animated lyrics studio for video creators.
           </p>
-        </motion.div>
+        </FadeIn>
 
-        {/* Input Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-2xl"
-        >
-          {/* Mode Tabs */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-muted/50 border border-border/50 mb-4">
-            <Tab label="Single Track" active={tab === "single"} onClick={() => setTab("single")} />
-            <Tab label="Playlist (Batch)" active={tab === "playlist"} onClick={() => setTab("playlist")} />
+        {/* Mode tabs + input */}
+        <FadeIn delay={0.14}>
+          <div className="space-y-4 max-w-2xl">
+            {/* Mode switcher */}
+            <div className="flex items-center gap-1 p-1 bg-muted/40 border border-border/60 rounded-xl w-fit">
+              {(["single", "playlist"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`relative px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
+                    mode === m ? "text-foreground" : "text-muted-foreground hover:text-foreground/80"
+                  }`}
+                >
+                  {mode === m && (
+                    <motion.div
+                      layoutId="mode-bg"
+                      className="absolute inset-0 rounded-lg bg-card border border-border/80 shadow-sm"
+                      transition={{ type: "spring", duration: 0.35, bounce: 0.1 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {m === "single" ? (
+                      <><HeadphonesIcon className="w-3.5 h-3.5" />Single Track</>
+                    ) : (
+                      <><PlaylistIcon className="w-3.5 h-3.5" />Playlist</>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Analyzer */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+              >
+                {mode === "single" ? <SingleAnalyzer /> : <PlaylistAnalyzer />}
+              </motion.div>
+            </AnimatePresence>
           </div>
+        </FadeIn>
 
-          <AnimatePresence mode="wait">
-            {tab === "single" ? (
-              <motion.div
-                key="single"
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ duration: 0.2 }}
-              >
-                <SingleAnalyzer />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="playlist"
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.2 }}
-              >
-                <PlaylistAnalyzer />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        {/* Stats row */}
+        <FadeIn delay={0.18}>
+          <div className="flex items-center gap-6 flex-wrap">
+            {[
+              { label: "Solfeggio tones mapped", value: "7" },
+              { label: "Frequency bands", value: "7" },
+              { label: "Resonance score range", value: "0–100" },
+              { label: "Max batch size", value: "20" },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col">
+                <span className="data-num text-[22px] text-foreground">{stat.value}</span>
+                <span className="label-xs mt-0.5">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
       </div>
 
-      {/* Feature Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-3xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-3 px-4 pb-8"
-      >
-        {FEATURES.map((feat, i) => (
-          <motion.div
-            key={feat.label}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 + i * 0.06, ease: [0.22, 1, 0.36, 1] }}
-            className="p-4 rounded-2xl bg-background/50 backdrop-blur border border-border/50 flex flex-col gap-3 hover:border-border/80 hover:bg-background/70 transition-all duration-200 group"
-          >
-            <div className={`w-9 h-9 rounded-xl ${feat.bg} flex items-center justify-center`}>
-              <feat.icon className={`w-[18px] h-[18px] ${feat.color}`} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold leading-snug">{feat.label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{feat.desc}</p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+      {/* ── Divider with ticker ── */}
+      <FadeIn delay={0.22}>
+        <div className="relative overflow-hidden border-y border-border/50 py-3 bg-muted/10">
+          <div className="flex animate-ticker whitespace-nowrap gap-0">
+            {[...TICKER, ...TICKER].map((item, i) => (
+              <span key={i} className="inline-flex items-center gap-3 px-5 text-[11px] font-mono-custom font-medium text-muted-foreground/60 tracking-widest uppercase">
+                <span className="w-1 h-1 rounded-full bg-primary/40 shrink-0" />
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      </FadeIn>
 
-      {/* Fine print */}
-      <div className="text-center px-4 pb-8 text-xs text-muted-foreground/50 max-w-lg mx-auto leading-relaxed">
-        Analysis is computed from URL metadata and acoustic theory models.
-        Results are deterministic per track. Healing frequency research references solfeggio and bioacoustic literature.
+      {/* ── Feature Grid ── */}
+      <div className="space-y-6">
+        <FadeIn delay={0}>
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display font-bold text-[20px] sm:text-[24px] tracking-tight">What we analyze</h2>
+            <span className="label-xs">{FEATURES.length} modules</span>
+          </div>
+        </FadeIn>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {FEATURES.map((feat, i) => (
+            <motion.div
+              key={feat.num}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 + i * 0.06, duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
+              className="signal-card group p-5 space-y-3 cursor-default"
+            >
+              <div className="flex items-start justify-between">
+                <div className={`w-9 h-9 rounded-xl ${feat.bg} flex items-center justify-center`}>
+                  <feat.Icon className={`w-[18px] h-[18px] ${feat.color}`} />
+                </div>
+                <span className="font-mono-custom text-[11px] text-muted-foreground/40 font-medium">{feat.num}</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-display font-semibold text-[14px] tracking-tight">{feat.label}</h3>
+                <p className="text-[12.5px] text-muted-foreground leading-relaxed">{feat.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
+
+      {/* ── Bottom disclaimer ── */}
+      <FadeIn delay={0}>
+        <p className="text-[11.5px] text-muted-foreground/40 leading-relaxed text-center max-w-xl mx-auto font-body">
+          Analysis is algorithmically derived from acoustic properties and solfeggio frequency research.
+          Results are deterministic per URL. Not a substitute for professional audio analysis tools.
+        </p>
+      </FadeIn>
     </div>
   );
 }
