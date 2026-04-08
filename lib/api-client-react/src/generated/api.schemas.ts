@@ -14,6 +14,23 @@ export interface AnalyzeMusicBody {
   url: string;
 }
 
+export interface AnalyzePlaylistBody {
+  /**
+   * Array of song URLs to analyze
+   * @minItems 1
+   * @maxItems 20
+   */
+  urls: string[];
+}
+
+export type PlaylistTrackResultStatus =
+  (typeof PlaylistTrackResultStatus)[keyof typeof PlaylistTrackResultStatus];
+
+export const PlaylistTrackResultStatus = {
+  success: "success",
+  error: "error",
+} as const;
+
 export interface FrequencyBand {
   /** Band label (e.g. Sub Bass, Bass, Low Mid, Mid, Upper Mid, Presence, Brilliance) */
   label: string;
@@ -81,6 +98,20 @@ export interface MusicAnalysis {
   createdAt: string;
 }
 
+export interface PlaylistTrackResult {
+  url: string;
+  status: PlaylistTrackResultStatus;
+  analysis?: MusicAnalysis;
+  error?: string;
+}
+
+export interface PlaylistAnalysisResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: PlaylistTrackResult[];
+}
+
 export type MusicAnalysisSummaryCategory =
   (typeof MusicAnalysisSummaryCategory)[keyof typeof MusicAnalysisSummaryCategory];
 
@@ -118,6 +149,21 @@ export interface AnalysisStats {
   categoryBreakdown: AnalysisStatsCategoryBreakdown;
 }
 
+export interface LyricsResult {
+  /** Full lyrics text or null if not found */
+  lyrics?: string | null;
+  /** Parsed or provided artist name */
+  artist: string;
+  /** Parsed or provided song title */
+  song: string;
+  /** Whether lyrics were successfully found */
+  found: boolean;
+  /** Lyrics split into individual lines */
+  lines?: string[];
+  /** Additional info message (e.g. if not found) */
+  message?: string;
+}
+
 export interface ErrorResponse {
   error: string;
   message: string;
@@ -129,4 +175,19 @@ export type GetRecentAnalysesParams = {
    * @maximum 50
    */
   limit?: number;
+};
+
+export type GetLyricsParams = {
+  /**
+   * Full song title (e.g. "Artist - Song Name")
+   */
+  title: string;
+  /**
+   * Explicit artist name override
+   */
+  artist?: string;
+  /**
+   * Explicit song name override
+   */
+  song?: string;
 };

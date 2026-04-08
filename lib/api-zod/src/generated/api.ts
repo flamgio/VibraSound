@@ -81,6 +81,93 @@ export const AnalyzeMusicResponse = zod.object({
 });
 
 /**
+ * Accepts multiple song URLs and returns rhythmic analysis for each
+ * @summary Analyze multiple songs from URLs
+ */
+export const analyzePlaylistBodyUrlsMax = 20;
+
+export const AnalyzePlaylistBody = zod.object({
+  urls: zod
+    .array(zod.string())
+    .min(1)
+    .max(analyzePlaylistBodyUrlsMax)
+    .describe("Array of song URLs to analyze"),
+});
+
+export const AnalyzePlaylistResponse = zod.object({
+  total: zod.number(),
+  succeeded: zod.number(),
+  failed: zod.number(),
+  results: zod.array(
+    zod.object({
+      url: zod.string(),
+      status: zod.enum(["success", "error"]),
+      analysis: zod
+        .object({
+          id: zod.number(),
+          url: zod.string(),
+          title: zod.string(),
+          bpm: zod.number().describe("Beats per minute"),
+          key: zod.string().describe("Musical key (e.g. C major, A minor)"),
+          energy: zod.number().describe("Energy level 0-1"),
+          danceability: zod.number().describe("Danceability score 0-1"),
+          dominantFrequency: zod.number().describe("Dominant frequency in Hz"),
+          frequencySpectrum: zod.array(
+            zod.object({
+              label: zod
+                .string()
+                .describe(
+                  "Band label (e.g. Sub Bass, Bass, Low Mid, Mid, Upper Mid, Presence, Brilliance)",
+                ),
+              minHz: zod.number(),
+              maxHz: zod.number(),
+              amplitude: zod.number().describe("Average amplitude 0-1"),
+            }),
+          ),
+          beatPattern: zod
+            .array(zod.number())
+            .describe("Beat intervals in seconds"),
+          tempoChanges: zod.array(
+            zod.object({
+              timestamp: zod.number().describe("Time in seconds"),
+              bpm: zod.number(),
+            }),
+          ),
+          cellularResonance: zod.object({
+            score: zod
+              .number()
+              .describe("Overall cellular resonance score 0-100"),
+            healingFrequencies: zod.array(
+              zod.object({
+                frequency: zod.number().describe("Frequency in Hz"),
+                name: zod
+                  .string()
+                  .describe(
+                    "Name of the healing frequency (e.g. Solfeggio 528 Hz)",
+                  ),
+                presence: zod.number().describe("Presence strength 0-1"),
+                benefit: zod.string().describe("Associated health benefit"),
+              }),
+            ),
+            assessment: zod
+              .string()
+              .describe("Human-readable assessment of cellular impact"),
+            category: zod.enum([
+              "highly_beneficial",
+              "beneficial",
+              "neutral",
+              "potentially_harmful",
+            ]),
+          }),
+          createdAt: zod.coerce.date(),
+        })
+        .optional(),
+      error: zod.string().optional(),
+    }),
+  ),
+});
+
+/**
  * Returns a list of recent music analyses
  * @summary Get recent analyses
  */
@@ -190,4 +277,37 @@ export const GetAnalysisStatsResponse = zod.object({
     neutral: zod.number(),
     potentially_harmful: zod.number(),
   }),
+});
+
+/**
+ * Fetches lyrics for a song by parsing the video title into artist and song name
+ * @summary Get lyrics for a song
+ */
+export const GetLyricsQueryParams = zod.object({
+  title: zod.coerce
+    .string()
+    .describe('Full song title (e.g. \"Artist - Song Name\")'),
+  artist: zod.coerce
+    .string()
+    .optional()
+    .describe("Explicit artist name override"),
+  song: zod.coerce.string().optional().describe("Explicit song name override"),
+});
+
+export const GetLyricsResponse = zod.object({
+  lyrics: zod
+    .string()
+    .nullish()
+    .describe("Full lyrics text or null if not found"),
+  artist: zod.string().describe("Parsed or provided artist name"),
+  song: zod.string().describe("Parsed or provided song title"),
+  found: zod.boolean().describe("Whether lyrics were successfully found"),
+  lines: zod
+    .array(zod.string())
+    .optional()
+    .describe("Lyrics split into individual lines"),
+  message: zod
+    .string()
+    .optional()
+    .describe("Additional info message (e.g. if not found)"),
 });

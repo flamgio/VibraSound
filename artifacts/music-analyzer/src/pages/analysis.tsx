@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import {
   BpmIcon, MusicNoteIcon, EnergyIcon, CellIcon, DnaIcon, FrequencyIcon,
-  ArrowLeftIcon, ExternalLinkIcon, AlertIcon, WaveformIcon, YoutubeIcon
+  ArrowLeftIcon, ExternalLinkIcon, AlertIcon, WaveformIcon, YoutubeIcon, SparkleIcon
 } from "@/components/icons";
 
 function CategoryBadge({ category }: { category: string }) {
@@ -163,16 +163,24 @@ export default function AnalysisDetail() {
         <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
           {analysis.title}
         </h1>
-        <a
-          href={analysis.url}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-          data-testid="link-source"
-        >
-          <ExternalLinkIcon className="w-4 h-4" />
-          View Original Source
-        </a>
+        <div className="flex items-center flex-wrap gap-3">
+          <a
+            href={analysis.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+            data-testid="link-source"
+          >
+            <ExternalLinkIcon className="w-4 h-4" />
+            View Original Source
+          </a>
+          <Link href={`/lyrics/${analysis.id}`}>
+            <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-500 hover:text-violet-400 transition-colors group" data-testid="link-lyrics">
+              <SparkleIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              Get Lyrics + Animations
+            </button>
+          </Link>
+        </div>
       </motion.div>
 
       {/* Metric Cards */}

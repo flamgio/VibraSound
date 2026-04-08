@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: analysis
     description: Music analysis operations
+  - name: lyrics
+    description: Song lyrics operations
 paths:
   /healthz:
     get:
@@ -53,6 +55,31 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Analysis failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analyze-playlist:
+    post:
+      operationId: analyzePlaylist
+      tags: [analysis]
+      summary: Analyze multiple songs from URLs
+      description: Accepts multiple song URLs and returns rhythmic analysis for each
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzePlaylistBody"
+      responses:
+        "200":
+          description: Playlist analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaylistAnalysisResult"
+        "400":
+          description: Invalid request
           content:
             application/json:
               schema:
@@ -117,6 +144,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnalysisStats"
+  /lyrics:
+    get:
+      operationId: getLyrics
+      tags: [lyrics]
+      summary: Get lyrics for a song
+      description: Fetches lyrics for a song by parsing the video title into artist and song name
+      parameters:
+        - name: title
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Full song title (e.g. "Artist - Song Name")
+        - name: artist
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Explicit artist name override
+        - name: song
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Explicit song name override
+      responses:
+        "200":
+          description: Lyrics result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LyricsResult"
+        "404":
+          description: Lyrics not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -134,6 +199,51 @@ components:
           description: URL of the song to analyze (YouTube, SoundCloud, or direct audio link)
       required:
         - url
+    AnalyzePlaylistBody:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          description: Array of song URLs to analyze
+          minItems: 1
+          maxItems: 20
+      required:
+        - urls
+    PlaylistAnalysisResult:
+      type: object
+      properties:
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaylistTrackResult"
+      required:
+        - total
+        - succeeded
+        - failed
+        - results
+    PlaylistTrackResult:
+      type: object
+      properties:
+        url:
+          type: string
+        status:
+          type: string
+          enum: [success, error]
+        analysis:
+          $ref: "#/components/schemas/MusicAnalysis"
+        error:
+          type: string
+      required:
+        - url
+        - status
     MusicAnalysis:
       type: object
       properties:
@@ -326,6 +436,34 @@ components:
         - averageCellularScore
         - topHealingFrequency
         - categoryBreakdown
+    LyricsResult:
+      type: object
+      properties:
+        lyrics:
+          type: string
+          nullable: true
+          description: Full lyrics text or null if not found
+        artist:
+          type: string
+          description: Parsed or provided artist name
+        song:
+          type: string
+          description: Parsed or provided song title
+        found:
+          type: boolean
+          description: Whether lyrics were successfully found
+        lines:
+          type: array
+          items:
+            type: string
+          description: Lyrics split into individual lines
+        message:
+          type: string
+          description: Additional info message (e.g. if not found)
+      required:
+        - found
+        - artist
+        - song
     ErrorResponse:
       type: object
       properties:

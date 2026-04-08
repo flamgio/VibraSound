@@ -19,11 +19,15 @@ import type {
 import type {
   AnalysisStats,
   AnalyzeMusicBody,
+  AnalyzePlaylistBody,
   ErrorResponse,
+  GetLyricsParams,
   GetRecentAnalysesParams,
   HealthStatus,
+  LyricsResult,
   MusicAnalysis,
   MusicAnalysisSummary,
+  PlaylistAnalysisResult,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -196,6 +200,93 @@ export const useAnalyzeMusic = <
   TContext
 > => {
   return useMutation(getAnalyzeMusicMutationOptions(options));
+};
+
+/**
+ * Accepts multiple song URLs and returns rhythmic analysis for each
+ * @summary Analyze multiple songs from URLs
+ */
+export const getAnalyzePlaylistUrl = () => {
+  return `/api/analyze-playlist`;
+};
+
+export const analyzePlaylist = async (
+  analyzePlaylistBody: AnalyzePlaylistBody,
+  options?: RequestInit,
+): Promise<PlaylistAnalysisResult> => {
+  return customFetch<PlaylistAnalysisResult>(getAnalyzePlaylistUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(analyzePlaylistBody),
+  });
+};
+
+export const getAnalyzePlaylistMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzePlaylist>>,
+    TError,
+    { data: BodyType<AnalyzePlaylistBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof analyzePlaylist>>,
+  TError,
+  { data: BodyType<AnalyzePlaylistBody> },
+  TContext
+> => {
+  const mutationKey = ["analyzePlaylist"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof analyzePlaylist>>,
+    { data: BodyType<AnalyzePlaylistBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return analyzePlaylist(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AnalyzePlaylistMutationResult = NonNullable<
+  Awaited<ReturnType<typeof analyzePlaylist>>
+>;
+export type AnalyzePlaylistMutationBody = BodyType<AnalyzePlaylistBody>;
+export type AnalyzePlaylistMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Analyze multiple songs from URLs
+ */
+export const useAnalyzePlaylist = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzePlaylist>>,
+    TError,
+    { data: BodyType<AnalyzePlaylistBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof analyzePlaylist>>,
+  TError,
+  { data: BodyType<AnalyzePlaylistBody> },
+  TContext
+> => {
+  return useMutation(getAnalyzePlaylistMutationOptions(options));
 };
 
 /**
@@ -451,6 +542,101 @@ export function useGetAnalysisStats<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetAnalysisStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Fetches lyrics for a song by parsing the video title into artist and song name
+ * @summary Get lyrics for a song
+ */
+export const getGetLyricsUrl = (params: GetLyricsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/lyrics?${stringifiedParams}`
+    : `/api/lyrics`;
+};
+
+export const getLyrics = async (
+  params: GetLyricsParams,
+  options?: RequestInit,
+): Promise<LyricsResult> => {
+  return customFetch<LyricsResult>(getGetLyricsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetLyricsQueryKey = (params?: GetLyricsParams) => {
+  return [`/api/lyrics`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetLyricsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLyrics>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: GetLyricsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLyrics>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLyricsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLyrics>>> = ({
+    signal,
+  }) => getLyrics(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLyrics>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLyricsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLyrics>>
+>;
+export type GetLyricsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get lyrics for a song
+ */
+
+export function useGetLyrics<
+  TData = Awaited<ReturnType<typeof getLyrics>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: GetLyricsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLyrics>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLyricsQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
