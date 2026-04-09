@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
 import {
   BpmIcon, MusicNoteIcon, ArrowRightIcon, WaveformIcon,
   CellIcon, AlertIcon, SparkleIcon
@@ -38,35 +35,32 @@ interface PlaylistData {
 }
 
 function ScoreRing({ score }: { score: number }) {
-  const color = score >= 80 ? "#10b981" : score >= 60 ? "#6366f1" : score >= 40 ? "#f59e0b" : "#ef4444";
-  const r = 20, c = 2 * Math.PI * r;
+  const color = score >= 80 ? "#10b981" : score >= 60 ? "#a78bfa" : score >= 40 ? "#f59e0b" : "#f87171";
+  const r = 22, c = 2 * Math.PI * r;
   const dash = (score / 100) * c;
   return (
-    <svg width="56" height="56" viewBox="0 0 56 56">
-      <circle cx="28" cy="28" r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />
+    <svg width="60" height="60" viewBox="0 0 60 60" className="shrink-0">
+      <circle cx="30" cy="30" r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />
       <circle
-        cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="4"
+        cx="30" cy="30" r={r} fill="none" stroke={color} strokeWidth="4"
         strokeDasharray={`${dash} ${c}`} strokeLinecap="round"
-        transform="rotate(-90 28 28)"
-        style={{ transition: "stroke-dasharray 0.8s ease" }}
+        transform="rotate(-90 30 30)"
+        style={{ transition: "stroke-dasharray 1s cubic-bezier(0.22, 1, 0.36, 1)" }}
       />
-      <text x="28" y="33" textAnchor="middle" fontSize="12" fontWeight="700" fill={color}>{score}</text>
+      <text x="30" y="35.5" textAnchor="middle" fontSize="13" fontWeight="700"
+        fontFamily="JetBrains Mono" fill={color}>{score}</text>
     </svg>
   );
 }
 
-function getCategoryLabel(cat: string) {
-  return cat.split("_").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
-}
-
-function getCategoryColors(cat: string) {
-  const m: Record<string, string> = {
-    highly_beneficial: "bg-emerald-500/12 text-emerald-600 border-emerald-500/25 dark:text-emerald-400",
-    beneficial: "bg-primary/12 text-primary border-primary/25",
-    neutral: "bg-amber-500/12 text-amber-600 border-amber-500/25 dark:text-amber-400",
-    potentially_harmful: "bg-red-500/12 text-red-600 border-red-500/25 dark:text-red-400",
+function getCategoryInfo(cat: string) {
+  const map: Record<string, { label: string; cls: string }> = {
+    highly_beneficial: { label: "Highly Beneficial", cls: "text-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/20" },
+    beneficial: { label: "Beneficial", cls: "text-violet-400 bg-violet-500/10 ring-1 ring-violet-500/20" },
+    neutral: { label: "Neutral", cls: "text-amber-500 bg-amber-500/10 ring-1 ring-amber-500/20" },
+    potentially_harmful: { label: "Potentially Harmful", cls: "text-red-500 bg-red-500/10 ring-1 ring-red-500/20" },
   };
-  return m[cat] ?? "";
+  return map[cat] ?? { label: cat.split("_").map(w => w[0].toUpperCase() + w.slice(1)).join(" "), cls: "text-muted-foreground bg-muted/40 ring-1 ring-border/40" };
 }
 
 export default function PlaylistResults() {
@@ -85,8 +79,8 @@ export default function PlaylistResults() {
 
   if (!data) {
     return (
-      <div className="max-w-5xl mx-auto pt-8 space-y-4">
-        {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}
+      <div className="max-w-4xl mx-auto pt-10 space-y-3">
+        {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-[100px] rounded-2xl" />)}
       </div>
     );
   }
@@ -115,24 +109,28 @@ export default function PlaylistResults() {
     : 0;
 
   return (
-    <div className="max-w-5xl mx-auto pt-8 pb-16 space-y-8">
+    <div className="max-w-4xl mx-auto pt-10 pb-16 space-y-7">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <WaveformIcon className="w-5 h-5 text-primary" />
-            <h1 className="font-display text-2xl font-bold tracking-tight">Playlist Analysis</h1>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/18">
+              <WaveformIcon className="w-4 h-4 text-primary" />
+            </div>
+            <h1 className="font-display text-[1.75rem] font-700 tracking-tight">Playlist Analysis</h1>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] text-muted-foreground font-body ml-0.5">
             {data.succeeded} of {data.total} tracks analyzed successfully
-            {data.failed > 0 && ` · ${data.failed} failed`}
+            {data.failed > 0 && <span className="text-destructive/70"> · {data.failed} failed</span>}
           </p>
         </div>
         <Link href="/">
-          <Button variant="outline" className="gap-2 rounded-xl h-9 text-sm">
+          <Button variant="outline" className="gap-2 rounded-xl h-9 text-[13px] font-body">
             <WaveformIcon className="w-4 h-4" />Analyze More
           </Button>
         </Link>
@@ -141,22 +139,30 @@ export default function PlaylistResults() {
       {/* Summary Stats */}
       {successResults.length > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="grid grid-cols-3 gap-3"
         >
           {[
-            { label: "Avg BPM", value: avgBpm, icon: BpmIcon, color: "text-primary", bg: "bg-primary/10" },
-            { label: "Avg Resonance", value: `${avgResonance}/100`, icon: CellIcon, color: "text-violet-500", bg: "bg-violet-500/10" },
-            { label: "Avg Energy", value: `${avgEnergy}%`, icon: SparkleIcon, color: "text-amber-500", bg: "bg-amber-500/10" },
+            { label: "Avg BPM", value: avgBpm.toString(), Icon: BpmIcon, iconColor: "text-violet-400", iconBg: "bg-violet-500/10", line: "linear-gradient(90deg, #a78bfa, #818cf8)" },
+            { label: "Avg Resonance", value: `${avgResonance}/100`, Icon: CellIcon, iconColor: "text-emerald-400", iconBg: "bg-emerald-500/10", line: "linear-gradient(90deg, #34d399, #10b981)" },
+            { label: "Avg Energy", value: `${avgEnergy}%`, Icon: SparkleIcon, iconColor: "text-amber-400", iconBg: "bg-amber-500/10", line: "linear-gradient(90deg, #f59e0b, #fbbf24)" },
           ].map((stat) => (
-            <div key={stat.label} className="p-4 rounded-2xl bg-background/50 backdrop-blur border border-border/50">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`w-7 h-7 rounded-lg ${stat.bg} flex items-center justify-center`}>
-                  <stat.icon className={`w-3.5 h-3.5 ${stat.color}`} />
+            <div
+              key={stat.label}
+              className="vb-card vb-metric"
+              style={{ "--metric-line": stat.line } as React.CSSProperties}
+            >
+              <div className="relative z-10 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-6 h-6 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
+                    <stat.Icon className={`w-3 h-3 ${stat.iconColor}`} />
+                  </div>
+                  <span className="label-xs">{stat.label}</span>
                 </div>
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{stat.label}</span>
+                <p className="font-display text-[1.6rem] font-700 tracking-tight data-num leading-none">{stat.value}</p>
               </div>
-              <p className="text-2xl font-bold font-display">{stat.value}</p>
             </div>
           ))}
         </motion.div>
@@ -164,70 +170,78 @@ export default function PlaylistResults() {
 
       {/* Sort controls */}
       {successResults.length > 1 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground font-medium">Sort by:</span>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.12 }}
+          className="flex items-center gap-2 flex-wrap"
+        >
+          <span className="text-[11px] text-muted-foreground font-mono-custom uppercase tracking-wider">Sort by:</span>
           {(["default", "bpm", "energy", "resonance"] as const).map(s => (
             <button
               key={s}
               onClick={() => setSortBy(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                sortBy === s ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground hover:text-foreground"
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all duration-200 font-body ${
+                sortBy === s
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/40 text-muted-foreground hover:text-foreground ring-1 ring-border/40"
               }`}
             >
               {s === "default" ? "Default" : s === "bpm" ? "BPM" : s === "energy" ? "Energy" : "Resonance"}
             </button>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Track List */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {sorted.map((result, index) => {
           if (!result.analysis) return null;
           const { analysis } = result;
           const cr = analysis.cellularResonance;
+          const { label, cls } = getCategoryInfo(cr.category);
           return (
             <motion.div
               key={result.url}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.04 }}
+              transition={{ delay: 0.1 + index * 0.04, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             >
               <Link href={`/analysis/${analysis.id}`}>
-                <Card className="group glass-card border-0 rounded-2xl cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
-                  <CardContent className="p-5 flex items-center gap-4">
+                <div className="vb-card cursor-pointer group">
+                  <div className="relative z-10 p-4 flex items-center gap-4">
                     {/* Track number */}
-                    <div className="w-8 h-8 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 text-sm font-bold text-muted-foreground">
+                    <div className="w-8 h-8 rounded-xl bg-muted/40 ring-1 ring-border/30 flex items-center justify-center shrink-0 text-[12px] font-mono-custom font-semibold text-muted-foreground">
                       {index + 1}
                     </div>
 
-                    {/* Resonance ring */}
+                    {/* Score ring */}
                     <ScoreRing score={cr.score} />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                      <p className="font-display font-700 text-[14px] tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
                         {analysis.title}
                       </p>
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-2.5 mt-1.5">
+                        <span className="flex items-center gap-1 text-[11.5px] font-mono-custom text-muted-foreground">
                           <BpmIcon className="w-3 h-3" />{Math.round(analysis.bpm)} BPM
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 text-[11.5px] font-mono-custom text-muted-foreground">
                           <MusicNoteIcon className="w-3 h-3" />{analysis.key}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          Energy {(analysis.energy * 100).toFixed(0)}%
+                        <span className="text-[11.5px] font-mono-custom text-muted-foreground">
+                          {(analysis.energy * 100).toFixed(0)}% energy
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-md border font-medium ${getCategoryColors(cr.category)}`}>
-                          {getCategoryLabel(cr.category)}
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold font-body ${cls}`}>
+                          {label}
                         </span>
                       </div>
                     </div>
 
-                    <ArrowRightIcon className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
-                  </CardContent>
-                </Card>
+                    <ArrowRightIcon className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                  </div>
+                </div>
               </Link>
             </motion.div>
           );
@@ -241,12 +255,14 @@ export default function PlaylistResults() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + (sorted.length + i) * 0.04 }}
           >
-            <div className="p-4 rounded-2xl border border-destructive/20 bg-destructive/5 flex items-center gap-3">
-              <AlertIcon className="w-5 h-5 text-destructive shrink-0" />
+            <div className="p-4 rounded-2xl ring-1 ring-destructive/20 bg-destructive/5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                <AlertIcon className="w-4 h-4 text-destructive" />
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-destructive">Failed to analyze</p>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{result.url}</p>
-                {result.error && <p className="text-xs text-destructive/70 mt-0.5">{result.error}</p>}
+                <p className="text-[13px] font-semibold text-destructive font-body">Failed to analyze</p>
+                <p className="text-[11.5px] text-muted-foreground truncate mt-0.5 font-mono-custom">{result.url}</p>
+                {result.error && <p className="text-[11.5px] text-destructive/60 mt-0.5 font-body">{result.error}</p>}
               </div>
             </div>
           </motion.div>

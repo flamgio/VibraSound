@@ -1,22 +1,23 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAnalyzeMusic } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   WaveformIcon, MusicNoteIcon, SparkleIcon, AlertIcon,
   YoutubeIcon, SoundCloudIcon, DnaIcon, FrequencyIcon,
-  CellIcon, PlaylistIcon, HeadphonesIcon, FilmIcon
+  CellIcon, PlaylistIcon, HeadphonesIcon, FilmIcon, BpmIcon, ZapIcon
 } from "@/components/icons";
 
 const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 
-/* ── Stagger wrapper ── */
-function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+function FadeIn({
+  children, delay = 0, className = ""
+}: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 22 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, delay, ease: [0.32, 0.72, 0, 1] }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
@@ -24,7 +25,6 @@ function FadeIn({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
-/* ── Single Track Analyzer ── */
 function SingleAnalyzer() {
   const [url, setUrl] = useState("");
   const [, setLocation] = useLocation();
@@ -41,21 +41,24 @@ function SingleAnalyzer() {
 
   return (
     <form onSubmit={handleAnalyze} className="space-y-3">
-      {/* URL input */}
-      <div className={`relative flex items-center gap-2 bg-card border rounded-xl p-1.5 shadow-md transition-all duration-300 ${
-        analyzeMutation.isPending
-          ? "border-primary/40 shadow-primary/10"
-          : "border-border/80 hover:border-border focus-within:border-primary/50 focus-within:shadow-primary/8"
-      }`}>
-        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 ml-0.5">
-          <MusicNoteIcon className="w-4 h-4 text-primary" />
+      <div
+        className={`vb-input relative flex items-center gap-2 rounded-2xl p-1.5 transition-all duration-300 ${
+          analyzeMutation.isPending
+            ? "bg-primary/6 ring-2 ring-primary/30 shadow-lg"
+            : "bg-card/80 backdrop-blur-sm ring-1 ring-border/60 hover:ring-border focus-within:ring-2 focus-within:ring-primary/30 shadow-md"
+        }`}
+      >
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ml-0.5 transition-colors ${
+          analyzeMutation.isPending ? "bg-primary/20" : "bg-primary/10"
+        }`}>
+          <MusicNoteIcon className={`w-4 h-4 transition-colors ${analyzeMutation.isPending ? "text-primary" : "text-primary"}`} />
         </div>
         <input
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste a YouTube, SoundCloud, or audio URL…"
-          className="flex-1 bg-transparent text-[14px] font-medium placeholder:text-muted-foreground/45 outline-none text-foreground min-w-0 py-1"
+          className="flex-1 bg-transparent text-[14px] font-body font-medium placeholder:text-muted-foreground/40 outline-none text-foreground min-w-0 py-1.5"
           data-testid="input-url"
           disabled={analyzeMutation.isPending}
           autoComplete="off"
@@ -63,18 +66,31 @@ function SingleAnalyzer() {
         <motion.button
           type="submit"
           disabled={!url.trim() || analyzeMutation.isPending}
-          whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-2 h-9 px-5 bg-primary text-primary-foreground rounded-lg text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:opacity-90 shrink-0"
+          whileTap={{ scale: 0.96 }}
+          whileHover={{ scale: 1.01 }}
+          className="btn-glow flex items-center gap-2 h-9 px-5 bg-primary text-primary-foreground rounded-xl text-[13px] font-semibold disabled:opacity-45 disabled:cursor-not-allowed transition-all shrink-0 shadow-md"
           data-testid="button-analyze"
         >
           <AnimatePresence mode="wait">
             {analyzeMutation.isPending ? (
-              <motion.span key="l" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+              <motion.span
+                key="l"
+                initial={{ opacity: 0, x: 4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                className="flex items-center gap-2"
+              >
                 <WaveformIcon className="w-3.5 h-3.5 animate-pulse" />
-                Analyzing
+                Analyzing…
               </motion.span>
             ) : (
-              <motion.span key="i" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+              <motion.span
+                key="i"
+                initial={{ opacity: 0, x: 4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                className="flex items-center gap-2"
+              >
                 <SparkleIcon className="w-3.5 h-3.5" />
                 Analyze
               </motion.span>
@@ -83,20 +99,23 @@ function SingleAnalyzer() {
         </motion.button>
       </div>
 
-      {analyzeMutation.isError && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 text-destructive text-[13px] px-2"
-        >
-          <AlertIcon className="w-4 h-4 shrink-0" />
-          <span>Could not analyze this URL. Check the link and try again.</span>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {analyzeMutation.isError && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -6, height: 0 }}
+            className="flex items-center gap-2 text-destructive text-[13px] px-2 pt-1"
+          >
+            <AlertIcon className="w-4 h-4 shrink-0" />
+            <span className="font-body">Could not analyze this URL. Please check the link and try again.</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Source hints */}
-      <div className="flex items-center gap-3 px-1.5">
-        <span className="label-xs">supports</span>
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4 px-2">
+        <span className="label-xs opacity-70">supports</span>
+        <div className="flex items-center gap-4">
           {[
             { Icon: YoutubeIcon, label: "YouTube", color: "text-red-500" },
             { Icon: SoundCloudIcon, label: "SoundCloud", color: "text-orange-500" },
@@ -104,7 +123,7 @@ function SingleAnalyzer() {
           ].map(({ Icon, label, color }) => (
             <div key={label} className={`flex items-center gap-1.5 text-[12px] font-medium ${color}`}>
               <Icon className="w-3 h-3" />
-              <span className="hidden sm:inline">{label}</span>
+              <span className="hidden sm:inline font-body">{label}</span>
             </div>
           ))}
         </div>
@@ -113,7 +132,6 @@ function SingleAnalyzer() {
   );
 }
 
-/* ── Playlist Analyzer ── */
 function PlaylistAnalyzer() {
   const [urls, setUrls] = useState("");
   const [, setLocation] = useLocation();
@@ -147,8 +165,8 @@ function PlaylistAnalyzer() {
 
   return (
     <form onSubmit={handleAnalyze} className="space-y-3">
-      <div className={`relative bg-card border rounded-xl overflow-hidden shadow-md transition-all duration-300 ${
-        loading ? "border-primary/40" : "border-border/80 focus-within:border-primary/50"
+      <div className={`relative rounded-2xl overflow-hidden ring-1 transition-all duration-300 ${
+        loading ? "ring-primary/35 shadow-lg shadow-primary/10" : "ring-border/60 bg-card/80 backdrop-blur-sm hover:ring-border focus-within:ring-2 focus-within:ring-primary/30"
       }`}>
         <textarea
           value={urls}
@@ -156,16 +174,18 @@ function PlaylistAnalyzer() {
           placeholder={"Paste URLs, one per line…\n\nhttps://youtube.com/watch?v=…\nhttps://soundcloud.com/…"}
           rows={5}
           disabled={loading}
-          className="w-full bg-transparent text-[13px] font-mono-custom placeholder:text-muted-foreground/35 placeholder:font-sans outline-none text-foreground resize-none p-4 leading-relaxed"
+          className="w-full bg-transparent text-[13px] font-mono-custom placeholder:text-muted-foreground/30 placeholder:font-body outline-none text-foreground resize-none p-4 leading-relaxed"
           data-testid="input-urls"
         />
-        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/60 bg-muted/20">
-          <span className="label-xs">{lineCount > 0 ? `${lineCount} / 20 URLs` : "Up to 20 tracks"}</span>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border/40 bg-muted/15">
+          <span className="label-xs">
+            {lineCount > 0 ? `${lineCount} / 20 URLs` : "Up to 20 tracks"}
+          </span>
           <motion.button
             type="submit"
             disabled={lineCount === 0 || loading}
-            whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-2 h-8 px-4 bg-primary text-primary-foreground rounded-lg text-[12px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all"
+            whileTap={{ scale: 0.96 }}
+            className="btn-glow flex items-center gap-2 h-8 px-4 bg-primary text-primary-foreground rounded-lg text-[12px] font-semibold disabled:opacity-45 disabled:cursor-not-allowed transition-all shadow-sm"
           >
             {loading ? (
               <><WaveformIcon className="w-3 h-3 animate-pulse" />Analyzing {lineCount} tracks…</>
@@ -175,86 +195,159 @@ function PlaylistAnalyzer() {
           </motion.button>
         </div>
       </div>
-      {error && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-destructive text-[13px] px-1">
-          <AlertIcon className="w-4 h-4 shrink-0" />
-          {error}
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center gap-2 text-destructive text-[13px] px-2"
+          >
+            <AlertIcon className="w-4 h-4 shrink-0" />
+            <span className="font-body">{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </form>
   );
 }
 
-/* ── Features ── */
 const FEATURES = [
-  { num: "01", label: "Tempo & BPM", desc: "Precise beat-per-minute detection with tempo variation mapping", Icon: WaveformIcon, color: "text-violet-500 dark:text-violet-400", bg: "bg-violet-500/10" },
-  { num: "02", label: "Musical Key", desc: "Root key and scale identification using harmonic analysis", Icon: MusicNoteIcon, color: "text-sky-500 dark:text-sky-400", bg: "bg-sky-500/10" },
-  { num: "03", label: "7-Band Spectrum", desc: "Sub-bass to presence frequency energy distribution", Icon: FrequencyIcon, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-500/10" },
-  { num: "04", label: "Cellular Resonance", desc: "Solfeggio alignment score measuring bioacoustic impact", Icon: CellIcon, color: "text-emerald-500 dark:text-emerald-400", bg: "bg-emerald-500/10" },
-  { num: "05", label: "Healing Frequencies", desc: "Alignment with 396, 432, 528, 639, 741, 852, 963 Hz", Icon: DnaIcon, color: "text-pink-500 dark:text-pink-400", bg: "bg-pink-500/10" },
-  { num: "06", label: "Lyrics + Video", desc: "Animated lyrics editor with 1080p WebM export for editors", Icon: FilmIcon, color: "text-indigo-500 dark:text-indigo-400", bg: "bg-indigo-500/10" },
+  {
+    num: "01",
+    label: "Tempo & BPM",
+    desc: "Precision beat-per-minute detection with tempo variation mapping across the full track timeline.",
+    Icon: BpmIcon,
+    accent: "from-violet-500/20 to-violet-500/5",
+    border: "border-violet-500/18",
+    iconBg: "bg-violet-500/12",
+    iconColor: "text-violet-400",
+    dotColor: "bg-violet-500",
+  },
+  {
+    num: "02",
+    label: "Musical Key",
+    desc: "Root key and scale identification using chromatic harmonic analysis and pitch-class profiling.",
+    Icon: MusicNoteIcon,
+    accent: "from-sky-500/20 to-sky-500/5",
+    border: "border-sky-500/18",
+    iconBg: "bg-sky-500/12",
+    iconColor: "text-sky-400",
+    dotColor: "bg-sky-500",
+  },
+  {
+    num: "03",
+    label: "7-Band Spectrum",
+    desc: "Sub-bass through presence frequency energy distribution across the full auditory spectrum.",
+    Icon: FrequencyIcon,
+    accent: "from-amber-500/20 to-amber-500/5",
+    border: "border-amber-500/18",
+    iconBg: "bg-amber-500/12",
+    iconColor: "text-amber-400",
+    dotColor: "bg-amber-500",
+  },
+  {
+    num: "04",
+    label: "Cellular Resonance",
+    desc: "Solfeggio alignment score (0–100) measuring bioacoustic and biofield impact potential.",
+    Icon: CellIcon,
+    accent: "from-emerald-500/20 to-emerald-500/5",
+    border: "border-emerald-500/18",
+    iconBg: "bg-emerald-500/12",
+    iconColor: "text-emerald-400",
+    dotColor: "bg-emerald-500",
+  },
+  {
+    num: "05",
+    label: "Healing Frequencies",
+    desc: "Alignment with 396, 432, 528, 639, 741, 852, 963 Hz — the solfeggio sacred tone matrix.",
+    Icon: DnaIcon,
+    accent: "from-rose-500/20 to-rose-500/5",
+    border: "border-rose-500/18",
+    iconBg: "bg-rose-500/12",
+    iconColor: "text-rose-400",
+    dotColor: "bg-rose-500",
+  },
+  {
+    num: "06",
+    label: "Lyrics + Video Export",
+    desc: "Animated lyrics editor with 6 animation styles and 1080p WebM video export for creators.",
+    Icon: FilmIcon,
+    accent: "from-indigo-500/20 to-indigo-500/5",
+    border: "border-indigo-500/18",
+    iconBg: "bg-indigo-500/12",
+    iconColor: "text-indigo-400",
+    dotColor: "bg-indigo-500",
+  },
 ];
 
-/* ── Ticker items ── */
-const TICKER = ["BPM Detection", "Solfeggio Alignment", "Frequency Spectrum", "Cellular Resonance", "Healing Tones", "Batch Analysis", "Lyrics Studio", "1080p Export", "Dark Mode", "Real-time Analysis"];
+const TICKER = [
+  "BPM Detection", "Solfeggio Alignment", "Frequency Spectrum",
+  "Cellular Resonance", "Healing Tones", "Batch Analysis",
+  "Lyrics Studio", "1080p Export", "Dark Mode", "Real-time Analysis",
+  "Musical Key", "Energy Mapping",
+];
 
 export default function HomePage() {
   const [mode, setMode] = useState<"single" | "playlist">("single");
 
   return (
-    <div className="py-10 sm:py-16 space-y-16">
+    <div className="py-12 sm:py-20 space-y-20">
+
       {/* ── Hero ── */}
-      <div className="space-y-8">
-        {/* Badge */}
+      <div className="space-y-10">
+
+        {/* Live badge */}
         <FadeIn delay={0}>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
-              </span>
-              <span className="text-[11px] font-mono-custom font-medium text-primary tracking-widest uppercase">Signal Analysis Engine</span>
-            </div>
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-primary/8 ring-1 ring-primary/20">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+            </span>
+            <span className="label-xs text-primary tracking-widest">Signal Analysis Engine — Active</span>
           </div>
         </FadeIn>
 
         {/* Headline */}
-        <FadeIn delay={0.06}>
-          <h1 className="font-display font-bold tracking-tight leading-[1.05]">
-            <span className="block text-[clamp(2.6rem,7vw,5rem)] text-foreground">
+        <FadeIn delay={0.07}>
+          <h1
+            className="font-display leading-[0.96] tracking-tight"
+            style={{ letterSpacing: "-0.03em" }}
+          >
+            <span className="block text-[clamp(3rem,8.5vw,6.5rem)] text-foreground">
               Decode the
             </span>
-            <span className="block text-[clamp(2.6rem,7vw,5rem)] gradient-text">
+            <span className="block text-[clamp(3rem,8.5vw,6.5rem)] gradient-text">
               physics of sound.
             </span>
           </h1>
         </FadeIn>
 
-        <FadeIn delay={0.1}>
-          <p className="text-[15px] sm:text-[16px] text-muted-foreground leading-relaxed max-w-xl font-body">
+        <FadeIn delay={0.13}>
+          <p className="text-[16px] sm:text-[17px] text-muted-foreground leading-[1.7] max-w-[520px] font-body font-[350]">
             Paste any music URL for instant BPM, key, frequency spectrum, and
             cellular resonance analysis — plus an animated lyrics studio for video creators.
           </p>
         </FadeIn>
 
-        {/* Mode tabs + input */}
-        <FadeIn delay={0.14}>
-          <div className="space-y-4 max-w-2xl">
+        {/* Analyzer card */}
+        <FadeIn delay={0.18}>
+          <div className="max-w-2xl space-y-4">
             {/* Mode switcher */}
-            <div className="flex items-center gap-1 p-1 bg-muted/40 border border-border/60 rounded-xl w-fit">
+            <div className="inline-flex items-center gap-0.5 p-1 bg-muted/30 ring-1 ring-border/50 rounded-2xl backdrop-blur-sm">
               {(["single", "playlist"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={`relative px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
+                  className={`relative px-4 py-1.5 rounded-xl text-[13px] font-semibold transition-all duration-200 font-body ${
                     mode === m ? "text-foreground" : "text-muted-foreground hover:text-foreground/80"
                   }`}
                 >
                   {mode === m && (
                     <motion.div
                       layoutId="mode-bg"
-                      className="absolute inset-0 rounded-lg bg-card border border-border/80 shadow-sm"
-                      transition={{ type: "spring", duration: 0.35, bounce: 0.1 }}
+                      className="absolute inset-0 rounded-xl bg-card ring-1 ring-border/80 shadow-sm"
+                      transition={{ type: "spring", duration: 0.38, bounce: 0.08 }}
                     />
                   )}
                   <span className="relative z-10 flex items-center gap-1.5">
@@ -268,14 +361,13 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Analyzer */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={mode}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
               >
                 {mode === "single" ? <SingleAnalyzer /> : <PlaylistAnalyzer />}
               </motion.div>
@@ -284,30 +376,33 @@ export default function HomePage() {
         </FadeIn>
 
         {/* Stats row */}
-        <FadeIn delay={0.18}>
-          <div className="flex items-center gap-6 flex-wrap">
+        <FadeIn delay={0.22}>
+          <div className="flex items-end gap-8 flex-wrap">
             {[
-              { label: "Solfeggio tones mapped", value: "7" },
-              { label: "Frequency bands", value: "7" },
-              { label: "Resonance score range", value: "0–100" },
-              { label: "Max batch size", value: "20" },
+              { value: "7", label: "Solfeggio tones" },
+              { value: "7", label: "Frequency bands" },
+              { value: "0–100", label: "Resonance range" },
+              { value: "20", label: "Max batch" },
             ].map((stat) => (
-              <div key={stat.label} className="flex flex-col">
-                <span className="data-num text-[22px] text-foreground">{stat.value}</span>
-                <span className="label-xs mt-0.5">{stat.label}</span>
+              <div key={stat.label} className="flex flex-col gap-0.5">
+                <span className="data-num text-[26px] text-foreground">{stat.value}</span>
+                <span className="label-xs">{stat.label}</span>
               </div>
             ))}
           </div>
         </FadeIn>
       </div>
 
-      {/* ── Divider with ticker ── */}
-      <FadeIn delay={0.22}>
-        <div className="relative overflow-hidden border-y border-border/50 py-3 bg-muted/10">
-          <div className="flex animate-ticker whitespace-nowrap gap-0">
+      {/* ── Ticker ── */}
+      <FadeIn delay={0.25}>
+        <div className="relative overflow-hidden border-y border-border/40 py-3.5 bg-muted/8">
+          <div className="flex animate-ticker whitespace-nowrap gap-0 select-none">
             {[...TICKER, ...TICKER].map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-3 px-5 text-[11px] font-mono-custom font-medium text-muted-foreground/60 tracking-widest uppercase">
-                <span className="w-1 h-1 rounded-full bg-primary/40 shrink-0" />
+              <span
+                key={i}
+                className="inline-flex items-center gap-3 px-6 text-[10.5px] font-mono-custom text-muted-foreground/50 tracking-[0.12em] uppercase"
+              >
+                <span className="w-1 h-1 rounded-full bg-primary/50 shrink-0" />
                 {item}
               </span>
             ))}
@@ -316,11 +411,13 @@ export default function HomePage() {
       </FadeIn>
 
       {/* ── Feature Grid ── */}
-      <div className="space-y-6">
-        <FadeIn delay={0}>
+      <div className="space-y-7">
+        <FadeIn>
           <div className="flex items-baseline justify-between">
-            <h2 className="font-display font-bold text-[20px] sm:text-[24px] tracking-tight">What we analyze</h2>
-            <span className="label-xs">{FEATURES.length} modules</span>
+            <h2 className="font-display text-[22px] sm:text-[28px] font-700 tracking-tight">
+              What we analyze
+            </h2>
+            <span className="label-xs opacity-60">{FEATURES.length} modules</span>
           </div>
         </FadeIn>
 
@@ -328,32 +425,53 @@ export default function HomePage() {
           {FEATURES.map((feat, i) => (
             <motion.div
               key={feat.num}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 + i * 0.06, duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
-              className="signal-card group p-5 space-y-3 cursor-default"
+              transition={{
+                delay: 0.04 + i * 0.07,
+                duration: 0.55,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className={`relative group overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${feat.accent} ring-1 ${feat.border} cursor-default transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}
             >
-              <div className="flex items-start justify-between">
-                <div className={`w-9 h-9 rounded-xl ${feat.bg} flex items-center justify-center`}>
-                  <feat.Icon className={`w-[18px] h-[18px] ${feat.color}`} />
+              <div className="absolute inset-0 bg-card/65 backdrop-blur-sm" />
+              <div className="relative z-10 space-y-3.5">
+                <div className="flex items-start justify-between">
+                  <div className={`w-10 h-10 rounded-xl ${feat.iconBg} flex items-center justify-center ring-1 ring-white/8`}>
+                    <feat.Icon className={`w-[18px] h-[18px] ${feat.iconColor}`} />
+                  </div>
+                  <span className="font-mono-custom text-[10px] text-muted-foreground/35 font-medium tracking-wider">
+                    {feat.num}
+                  </span>
                 </div>
-                <span className="font-mono-custom text-[11px] text-muted-foreground/40 font-medium">{feat.num}</span>
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-display font-semibold text-[14px] tracking-tight">{feat.label}</h3>
-                <p className="text-[12.5px] text-muted-foreground leading-relaxed">{feat.desc}</p>
+                <div className="space-y-1.5">
+                  <h3 className="font-display font-700 text-[14.5px] tracking-tight">{feat.label}</h3>
+                  <p className="text-[12.5px] text-muted-foreground leading-relaxed font-body">{feat.desc}</p>
+                </div>
+                <div className={`w-6 h-0.5 rounded-full ${feat.dotColor} opacity-60`} />
               </div>
             </motion.div>
           ))}
         </div>
       </div>
 
-      {/* ── Bottom disclaimer ── */}
-      <FadeIn delay={0}>
-        <p className="text-[11.5px] text-muted-foreground/40 leading-relaxed text-center max-w-xl mx-auto font-body">
-          Analysis is algorithmically derived from acoustic properties and solfeggio frequency research.
-          Results are deterministic per URL. Not a substitute for professional audio analysis tools.
-        </p>
+      {/* ── Bottom CTA Strip ── */}
+      <FadeIn>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-6 rounded-2xl bg-primary/5 ring-1 ring-primary/12">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/12 flex items-center justify-center ring-1 ring-primary/20">
+              <ZapIcon className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-display font-700 text-[14px]">Try it now — it's free</p>
+              <p className="text-[12.5px] text-muted-foreground font-body mt-0.5">Deterministic results per URL. Instant delivery.</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground/45 leading-relaxed text-center sm:text-right max-w-xs font-body">
+            Analysis is algorithmically derived from acoustic properties and solfeggio frequency research.
+            Not a substitute for professional audio tools.
+          </p>
+        </div>
       </FadeIn>
     </div>
   );

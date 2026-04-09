@@ -18,7 +18,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Frontend**: React + Vite + Tailwind CSS + shadcn/ui
 - **Animations**: Framer Motion
 - **Charts**: Recharts
-- **Fonts**: Space Grotesk (display), Inter (body), JetBrains Mono (mono)
+- **Fonts**: Syne (display headings), Outfit (body), JetBrains Mono (mono)
 
 ## Project: VibraSound - Music Rhythm & Cellular Resonance Analyzer
 
@@ -37,11 +37,16 @@ A professional music analysis web application targeting music producers, video e
 - **Global Stats**: Aggregate statistics with radial gauge + pie chart breakdown
 - **Dark mode** (persisted to localStorage, respects OS preference)
 
-### Design System
-- Custom SVG icons in `artifacts/music-analyzer/src/components/icons.tsx`
-- Animated background: floating color orbs + frequency wave bars + sine waves
-- Glassmorphism cards (`.glass-card`), glow utilities, gradient text
-- Color palette: indigo/violet/blue primary, deep navy dark mode
+### Design System (v2 — Premium Midnight Protocol)
+- **Fonts**: Syne (display, geometric, -0.02em letter-spacing) + Outfit (body) + JetBrains Mono (numbers/code)
+- **Color palette dark mode**: bg `240 18% 4%` (deep obsidian), primary `258 90% 75%` (electric violet), chart colors: violet, cyan, amber, emerald, rose
+- **Card system**: `.vb-card` — gradient border via CSS mask trick + corner highlight; `.vb-metric` — 1.5px colored top accent line via `--metric-line` CSS variable
+- **Typography utilities**: `.gradient-text` (violet→cyan), `.gradient-text-v2/gold/mint/cyan`, `.data-num` (JetBrains Mono tabular), `.label-xs/sm` (uppercase mono labels)
+- **Glow utilities**: `.glow-violet/cyan/mint/amber/rose` (box-shadow glows)
+- **Animated background**: aurora radial gradient orbs (4 orbs), sine wave lines (4 waves), floating particles, spectrum bars at bottom, scan line in dark mode, dot grid
+- **Button**: `.btn-glow` — top highlight + bottom glow shadow effect
+- **Custom icons**: All redesigned with 1.5px stroke weight in `components/icons.tsx`
+- **Animation easing**: Framer Motion with `[0.22, 1, 0.36, 1]` (smooth spring-like), delays staggered at 0.05s intervals
 
 ### Database Schema
 - `analyses` table: stores all music analysis results with URL, title, BPM, key, energy, danceability, dominant frequency, frequency spectrum (JSONB), beat pattern (JSONB), tempo changes (JSONB), cellular resonance (JSONB)

@@ -1,5 +1,4 @@
 import { useGetAnalysisStats } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -12,37 +11,39 @@ import {
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
   highly_beneficial: { label: "Highly Beneficial", color: "#10b981" },
-  beneficial: { label: "Beneficial", color: "hsl(239, 84%, 67%)" },
+  beneficial: { label: "Beneficial", color: "#a78bfa" },
   neutral: { label: "Neutral", color: "#f59e0b" },
-  potentially_harmful: { label: "Potentially Harmful", color: "#ef4444" },
+  potentially_harmful: { label: "Potentially Harmful", color: "#f87171" },
 };
 
 function StatCard({
-  label, value, sub, icon: Icon, color, bg, delay
+  label, value, sub, icon: Icon, iconColor, iconBg, line, delay
 }: {
   label: string; value: string | number; sub: string;
-  icon: React.FC<{ className?: string }>; color: string; bg: string; delay: number;
+  icon: React.FC<{ className?: string }>; iconColor: string; iconBg: string;
+  line: string; delay: number;
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
+      transition={{ delay, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Card className="glass-card border-0 rounded-2xl">
-        <CardHeader className="px-5 pt-5 pb-2 flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            {label}
-          </CardTitle>
-          <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
-            <Icon className={`w-4 h-4 ${color}`} />
+      <div
+        className="vb-card vb-metric"
+        style={{ "--metric-line": line } as React.CSSProperties}
+      >
+        <div className="relative z-10 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="label-xs opacity-65">{label}</p>
+            <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center ring-1 ring-white/6`}>
+              <Icon className={`w-4 h-4 ${iconColor}`} />
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="px-5 pb-5">
-          <div className="text-3xl font-bold font-display">{value}</div>
-          <p className="text-xs text-muted-foreground mt-1">{sub}</p>
-        </CardContent>
-      </Card>
+          <div className="font-display text-[2rem] font-700 tracking-tight leading-none data-num">{value}</div>
+          <p className="text-[12px] text-muted-foreground font-body mt-1.5">{sub}</p>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -61,87 +62,95 @@ export default function Stats() {
         .filter((d) => d.value > 0)
     : [];
 
-  const resonanceData = stats
-    ? [{ value: stats.averageCellularScore, fill: "#6366f1" }]
-    : [];
+  const resonanceScore = stats ? Math.round(stats.averageCellularScore) : 0;
+  const resonanceColor =
+    resonanceScore >= 70 ? "#10b981" :
+    resonanceScore >= 50 ? "#a78bfa" : "#f59e0b";
 
   return (
-    <div className="space-y-8 pt-8 pb-16">
+    <div className="space-y-8 pt-10 pb-16">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3"
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="flex items-center gap-3.5"
       >
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <div className="w-11 h-11 rounded-2xl bg-primary/8 ring-1 ring-primary/18 flex items-center justify-center">
           <ChartBarIcon className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Global Statistics</h1>
-          <p className="text-sm text-muted-foreground">Aggregated data across all analyzed tracks</p>
+          <h1 className="font-display text-[1.75rem] font-700 tracking-tight leading-tight">Global Statistics</h1>
+          <p className="text-[13px] text-muted-foreground font-body mt-0.5">Aggregated data across all analyzed tracks</p>
         </div>
       </motion.div>
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[130px] rounded-2xl" />)}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <Skeleton className="h-80 rounded-2xl" />
-            <Skeleton className="h-80 rounded-2xl" />
+            <Skeleton className="h-[340px] rounded-2xl" />
+            <Skeleton className="h-[340px] rounded-2xl" />
           </div>
         </div>
       ) : stats ? (
-        <div className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-5">
+          {/* Stat Cards */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Total Analyzed"
               value={stats.totalAnalyses}
               sub="Tracks processed"
               icon={WaveformIcon}
-              color="text-primary"
-              bg="bg-primary/10"
-              delay={0.1}
+              iconColor="text-violet-400"
+              iconBg="bg-violet-500/10"
+              line="linear-gradient(90deg, #a78bfa, #818cf8)"
+              delay={0.08}
             />
             <StatCard
               label="Average BPM"
               value={Math.round(stats.averageBpm)}
               sub="Beats per minute"
               icon={BpmIcon}
-              color="text-cyan-500"
-              bg="bg-cyan-500/10"
-              delay={0.15}
+              iconColor="text-cyan-400"
+              iconBg="bg-cyan-500/10"
+              line="linear-gradient(90deg, #22d3ee, #38bdf8)"
+              delay={0.14}
             />
             <StatCard
               label="Avg Resonance"
-              value={`${Math.round(stats.averageCellularScore)} / 100`}
+              value={`${resonanceScore}/100`}
               sub="Cellular score"
               icon={CellIcon}
-              color="text-violet-500"
-              bg="bg-violet-500/10"
+              iconColor="text-emerald-400"
+              iconBg="bg-emerald-500/10"
+              line="linear-gradient(90deg, #34d399, #10b981)"
               delay={0.2}
             />
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
+              transition={{ delay: 0.26, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Card className="glass-card border-0 rounded-2xl">
-                <CardHeader className="px-5 pt-5 pb-2 flex flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Top Healing Tone
-                  </CardTitle>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                    <DnaIcon className="w-4 h-4 text-emerald-500" />
+              <div
+                className="vb-card vb-metric"
+                style={{ "--metric-line": "linear-gradient(90deg, #f472b6, #fb7185)" } as React.CSSProperties}
+              >
+                <div className="relative z-10 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="label-xs opacity-65">Top Healing Tone</p>
+                    <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center ring-1 ring-white/6">
+                      <DnaIcon className="w-4 h-4 text-rose-400" />
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent className="px-5 pb-5">
-                  <div className="text-base font-bold font-display leading-snug line-clamp-2">{stats.topHealingFrequency}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Most detected across analyses</p>
-                </CardContent>
-              </Card>
+                  <div className="font-display text-[15px] font-700 leading-snug tracking-tight line-clamp-2">
+                    {stats.topHealingFrequency}
+                  </div>
+                  <p className="text-[12px] text-muted-foreground font-body mt-1.5">Most detected across analyses</p>
+                </div>
+              </div>
             </motion.div>
           </div>
 
@@ -149,84 +158,91 @@ export default function Stats() {
           <div className="grid gap-4 md:grid-cols-2">
             {/* Resonance Gauge */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
+              transition={{ delay: 0.34, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Card className="glass-card border-0 rounded-2xl h-full">
-                <CardHeader className="px-5 pt-5 pb-3">
-                  <CardTitle className="text-sm font-semibold">Average Cellular Resonance</CardTitle>
-                  <CardDescription className="text-xs">Global biofield impact score</CardDescription>
-                </CardHeader>
-                <CardContent className="px-5 pb-5 flex flex-col items-center">
-                  <div className="relative">
-                    <ResponsiveContainer width={200} height={200}>
-                      <RadialBarChart
-                        cx="50%" cy="50%"
-                        innerRadius="65%" outerRadius="95%"
-                        data={resonanceData}
-                        startAngle={220} endAngle={-40}
-                        barSize={16}
-                      >
-                        <RadialBar
-                          dataKey="value"
-                          cornerRadius={8}
-                          background={{ fill: "hsl(var(--muted))", radius: 8 } as never}
-                        />
-                      </RadialBarChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-4xl font-bold font-mono text-primary">
-                        {Math.round(stats.averageCellularScore)}
-                      </span>
-                      <span className="text-sm text-muted-foreground font-medium">/ 100</span>
-                    </div>
+              <div className="vb-card h-full">
+                <div className="relative z-10 p-5 flex flex-col">
+                  <div className="mb-5">
+                    <p className="font-display font-700 text-[14px] tracking-tight">Average Cellular Resonance</p>
+                    <p className="text-[12px] text-muted-foreground font-body mt-0.5">Global biofield impact score</p>
                   </div>
-                  <p className="text-sm text-muted-foreground text-center mt-2">
-                    {stats.averageCellularScore >= 70
-                      ? "Overall beneficial resonance profile across analyzed tracks"
-                      : stats.averageCellularScore >= 50
-                      ? "Moderate cellular resonance across analyzed tracks"
-                      : "Low resonance profile — try analyzing more healing-frequency tracks"}
-                  </p>
-                </CardContent>
-              </Card>
+                  <div className="flex flex-col items-center flex-1">
+                    <div className="relative">
+                      <ResponsiveContainer width={200} height={200}>
+                        <RadialBarChart
+                          cx="50%" cy="50%"
+                          innerRadius="62%" outerRadius="94%"
+                          data={[{ value: resonanceScore, fill: resonanceColor }]}
+                          startAngle={220} endAngle={-40}
+                          barSize={18}
+                        >
+                          <RadialBar
+                            dataKey="value"
+                            cornerRadius={9}
+                            background={{ fill: "hsl(var(--muted))", radius: 9 } as never}
+                          />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span
+                          className="data-num font-display font-700"
+                          style={{ color: resonanceColor, fontSize: "42px", letterSpacing: "-0.04em" }}
+                        >
+                          {resonanceScore}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground font-mono-custom tracking-wider">/ 100</span>
+                      </div>
+                    </div>
+                    <p className="text-[12.5px] text-muted-foreground text-center mt-2 font-body leading-relaxed max-w-[240px]">
+                      {resonanceScore >= 70
+                        ? "Overall beneficial resonance profile across analyzed tracks"
+                        : resonanceScore >= 50
+                        ? "Moderate cellular resonance across analyzed tracks"
+                        : "Low resonance — try analyzing healing-frequency tracks"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
             {/* Category Breakdown */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.4, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Card className="glass-card border-0 rounded-2xl h-full">
-                <CardHeader className="px-5 pt-5 pb-3">
-                  <CardTitle className="text-sm font-semibold">Cellular Impact Breakdown</CardTitle>
-                  <CardDescription className="text-xs">Distribution by resonance category</CardDescription>
-                </CardHeader>
-                <CardContent className="px-5 pb-5">
+              <div className="vb-card h-full">
+                <div className="relative z-10 p-5 flex flex-col">
+                  <div className="mb-5">
+                    <p className="font-display font-700 text-[14px] tracking-tight">Cellular Impact Breakdown</p>
+                    <p className="text-[12px] text-muted-foreground font-body mt-0.5">Distribution by resonance category</p>
+                  </div>
                   {pieData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={240}>
+                    <ResponsiveContainer width="100%" height={270}>
                       <PieChart>
                         <Pie
                           data={pieData}
-                          cx="50%" cy="45%"
-                          innerRadius={55}
-                          outerRadius={85}
+                          cx="50%" cy="44%"
+                          innerRadius={58}
+                          outerRadius={92}
                           paddingAngle={4}
                           dataKey="value"
                           strokeWidth={0}
                         >
                           {pieData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} fillOpacity={0.9} />
+                            <Cell key={i} fill={entry.color} fillOpacity={0.88} />
                           ))}
                         </Pie>
                         <Tooltip
                           contentStyle={{
                             backgroundColor: "hsl(var(--card))",
                             border: "1px solid hsl(var(--border))",
-                            borderRadius: "0.75rem",
+                            borderRadius: "0.875rem",
                             fontSize: "12px",
+                            fontFamily: "JetBrains Mono",
+                            boxShadow: "var(--shadow-lg)",
                           }}
                           formatter={(v: number, _: string, props: { payload?: { label?: string } }) => [
                             `${v} tracks`,
@@ -234,22 +250,26 @@ export default function Stats() {
                           ]}
                         />
                         <Legend
+                          iconType="circle"
+                          iconSize={8}
                           formatter={(value: string) => (
-                            <span className="text-xs text-foreground">{CATEGORY_CONFIG[value]?.label ?? value}</span>
+                            <span style={{ fontFamily: "Outfit", fontSize: "12px", color: "hsl(var(--foreground))", opacity: 0.75 }}>
+                              {CATEGORY_CONFIG[value]?.label ?? value}
+                            </span>
                           )}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-64 flex flex-col items-center justify-center gap-3 text-center">
-                      <ChartBarIcon className="w-10 h-10 text-muted-foreground/30" />
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center py-12">
+                      <ChartBarIcon className="w-10 h-10 text-muted-foreground/25" />
+                      <p className="text-[13px] text-muted-foreground font-body">
                         No data yet. Analyze some tracks first.
                       </p>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
