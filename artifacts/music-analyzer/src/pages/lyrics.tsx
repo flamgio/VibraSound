@@ -283,21 +283,38 @@ export default function LyricsPage() {
     canvas.height = H;
     const ctx = canvas.getContext("2d")!;
 
+    // Detect the best supported MIME type
+    const mimeTypes = [
+      "video/webm;codecs=vp9",
+      "video/webm;codecs=vp8",
+      "video/webm",
+    ];
+    const mimeType = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) ?? "";
+
     const stream = canvas.captureStream(30);
     const chunks: Blob[] = [];
-    const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
-    recorder.ondataavailable = (e) => e.data.size > 0 && chunks.push(e.data);
+
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    } catch {
+      recorder = new MediaRecorder(stream);
+    }
+
+    recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: "video/webm" });
+      const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${lyricsState?.song || "lyrics"}-animated.webm`;
+      a.href = url;
+      a.download = `${(lyricsState?.song || "lyrics").replace(/[^a-z0-9]/gi, "_")}-animated.webm`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(a.href);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       setIsDownloading(false);
     };
 
-    const bg = BG_PRESETS.find(b => b.id === bgPreset);
     const bgColors: Record<string, string> = {
       dark: "#000000",
       "gradient-dark": "#0a0a1a",
@@ -307,85 +324,100 @@ export default function LyricsPage() {
       transparent: "#00ff00",
     };
 
-    const frameDuration = lineDelay;
     const fps = 30;
-    const framesPerLine = Math.floor((frameDuration / 1000) * fps);
+    const msPerFrame = 1000 / fps;
+    const framesPerLine = Math.max(1, Math.floor((lineDelay / 1000) * fps));
     let lineIdx = 0;
     let frame = 0;
 
-    recorder.start();
-
-    const drawFrame = () => {
-      if (lineIdx >= editedLines.length) {
-        recorder.stop();
-        return;
-      }
-
+    const drawCanvasFrame = () => {
+      const line = editedLines[lineIdx] ?? "";
+      const prevL = lineIdx > 0 ? editedLines[lineIdx - 1] : "";
+      const nextL = lineIdx < editedLines.length - 1 ? editedLines[lineIdx + 1] : "";
       const progress = frame / framesPerLine;
+      const alpha = progress < 0.15 ? progress / 0.15 : progress > 0.85 ? (1 - progress) / 0.15 : 1;
+
+      // Background
+      ctx.globalAlpha = 1;
       ctx.fillStyle = bgColors[bgPreset] ?? "#000000";
       ctx.fillRect(0, 0, W, H);
 
-      const line = editedLines[lineIdx];
-      const prevL = lineIdx > 0 ? editedLines[lineIdx - 1] : "";
-      const nextL = lineIdx < editedLines.length - 1 ? editedLines[lineIdx + 1] : "";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
 
-      const alpha = progress < 0.15 ? progress / 0.15 : progress > 0.85 ? (1 - progress) / 0.15 : 1;
-
-      // Previous line (ghost)
+      // Prev line ghost
       if (prevL) {
         ctx.globalAlpha = 0.25 * alpha;
-        ctx.font = `600 ${fontSize * 0.55}px "${font}"`;
+        ctx.font = `600 ${Math.round(fontSize * 0.55)}px "${font}", sans-serif`;
         ctx.fillStyle = textColor;
-        ctx.textAlign = "center";
-        ctx.fillText(prevL, W / 2, H / 2 - fontSize * 1.5);
+        ctx.fillText(prevL, W / 2, H / 2 - fontSize * 1.6, W - 200);
       }
 
-      // Current line
+      // Current line (with word wrap)
       ctx.globalAlpha = alpha;
-      ctx.font = `700 ${fontSize}px "${font}"`;
       ctx.fillStyle = textColor;
-      ctx.textAlign = "center";
+      ctx.shadowBlur = 0;
       if (textShadow) {
         ctx.shadowColor = textColor;
         ctx.shadowBlur = 40;
       }
-      // Wrap long lines
-      const maxW = W - 200;
+      ctx.font = `700 ${fontSize}px "${font}", sans-serif`;
+
       const words = line.split(" ");
-      let ln = "";
-      let yOffset = H / 2;
+      const maxW = W - 200;
+      const lineObjs: string[] = [];
+      let current = "";
       for (const word of words) {
-        const test = ln + (ln ? " " : "") + word;
-        if (ctx.measureText(test).width > maxW && ln) {
-          ctx.fillText(ln, W / 2, yOffset);
-          yOffset += fontSize * 1.3;
-          ln = word;
+        const test = current ? `${current} ${word}` : word;
+        if (ctx.measureText(test).width > maxW && current) {
+          lineObjs.push(current);
+          current = word;
         } else {
-          ln = test;
+          current = test;
         }
       }
-      ctx.fillText(ln, W / 2, yOffset);
+      if (current) lineObjs.push(current);
+
+      const totalH = lineObjs.length * fontSize * 1.3;
+      let yStart = H / 2 - totalH / 2 + fontSize / 2;
+      for (const l of lineObjs) {
+        ctx.fillText(l, W / 2, yStart);
+        yStart += fontSize * 1.3;
+      }
+
       ctx.shadowBlur = 0;
 
-      // Next line (ghost)
+      // Next line ghost
       if (nextL) {
         ctx.globalAlpha = 0.2 * alpha;
-        ctx.font = `600 ${fontSize * 0.55}px "${font}"`;
-        ctx.fillText(nextL, W / 2, H / 2 + fontSize * 1.8);
+        ctx.font = `600 ${Math.round(fontSize * 0.55)}px "${font}", sans-serif`;
+        ctx.fillStyle = textColor;
+        ctx.fillText(nextL, W / 2, H / 2 + fontSize * 1.9, W - 200);
       }
 
       ctx.globalAlpha = 1;
+    };
 
+    // Start recording — use setInterval for reliable fixed-rate frame timing
+    recorder.start();
+
+    // Draw initial frame immediately
+    drawCanvasFrame();
+
+    const intervalId = setInterval(() => {
       frame++;
       if (frame >= framesPerLine) {
         frame = 0;
         lineIdx++;
       }
-
-      requestAnimationFrame(drawFrame);
-    };
-
-    drawFrame();
+      if (lineIdx >= editedLines.length) {
+        clearInterval(intervalId);
+        // Give the recorder a moment to flush the last frames
+        setTimeout(() => recorder.stop(), 200);
+        return;
+      }
+      drawCanvasFrame();
+    }, msPerFrame);
   };
 
   const isLight = bgPreset === "white";

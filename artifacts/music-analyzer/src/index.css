@@ -294,35 +294,93 @@
   }
 
   /* ─── GRADIENT TEXT ─── */
+  /* Sky blue → white → light cyan — primary hero gradient */
   .gradient-text {
-    background: linear-gradient(125deg, #a78bff 0%, #c084fc 40%, #38bdf8 100%);
+    background: linear-gradient(125deg, #7dd3fc 0%, #e0f2fe 45%, #bae6fd 75%, #ffffff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  /* Electric blue → white → ice blue */
   .gradient-text-v2 {
-    background: linear-gradient(125deg, #7c6ff7 0%, #a78bfa 45%, #22d3ee 100%);
+    background: linear-gradient(125deg, #38bdf8 0%, #f0f9ff 50%, #93c5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  /* Violet → light blue — secondary accent */
+  .gradient-text-violet {
+    background: linear-gradient(125deg, #a78bfa 0%, #c4b5fd 40%, #93c5fd 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .gradient-text-gold {
-    background: linear-gradient(125deg, #f59e0b 0%, #fcd34d 50%, #fb923c 100%);
+    background: linear-gradient(125deg, #f59e0b 0%, #fcd34d 50%, #fef9c3 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .gradient-text-mint {
-    background: linear-gradient(125deg, #10b981 0%, #34d399 50%, #6ee7b7 100%);
+    background: linear-gradient(125deg, #10b981 0%, #6ee7b7 50%, #d1fae5 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .gradient-text-cyan {
-    background: linear-gradient(125deg, #06b6d4 0%, #22d3ee 50%, #67e8f9 100%);
+    background: linear-gradient(125deg, #06b6d4 0%, #67e8f9 50%, #e0f9ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+  /* White → light blue (for dark cards) */
+  .gradient-text-ice {
+    background: linear-gradient(125deg, #ffffff 0%, #bae6fd 60%, #7dd3fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── EXTRA TEXT STYLES ─── */
+  /* Italic subtitle style */
+  .text-italic-accent {
+    font-style: italic;
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    font-family: 'Outfit', sans-serif;
+    color: hsl(var(--muted-foreground));
+  }
+  /* Wide tracking display */
+  .text-wide-display {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  /* Serif-style number */
+  .text-big-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 300;
+    letter-spacing: -0.06em;
+    font-variant-numeric: tabular-nums;
+    line-height: 0.9;
+  }
+  /* Highlight quote */
+  .text-highlight {
+    position: relative;
+    display: inline;
+  }
+  .text-highlight::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: hsl(var(--primary) / 0.18);
+    border-radius: 2px;
+    z-index: -1;
   }
 
   /* ─── DISPLAY FONT ─── */

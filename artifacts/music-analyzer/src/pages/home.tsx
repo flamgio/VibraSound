@@ -299,33 +299,33 @@ export default function HomePage() {
 
         {/* Live badge */}
         <FadeIn delay={0}>
-          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-primary/8 ring-1 ring-primary/20">
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-sky-500/10 ring-1 ring-sky-400/25">
             <span className="relative flex h-1.5 w-1.5 shrink-0">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+              <span className="absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-400" />
             </span>
-            <span className="label-xs text-primary tracking-widest">Signal Analysis Engine — Active</span>
+            <span className="text-wide-display text-sky-400">Signal Analysis Engine — Active</span>
           </div>
         </FadeIn>
 
         {/* Headline */}
         <FadeIn delay={0.07}>
           <h1
-            className="font-display leading-[0.96] tracking-tight"
+            className="font-display leading-[0.96]"
             style={{ letterSpacing: "-0.03em" }}
           >
-            <span className="block text-[clamp(3rem,8.5vw,6.5rem)] text-foreground">
+            <span className="block text-[clamp(3rem,8.5vw,6.5rem)] text-foreground/90 font-[800] italic">
               Decode the
             </span>
-            <span className="block text-[clamp(3rem,8.5vw,6.5rem)] gradient-text">
+            <span className="block text-[clamp(3rem,8.5vw,6.5rem)] gradient-text font-[800]">
               physics of sound.
             </span>
           </h1>
         </FadeIn>
 
         <FadeIn delay={0.13}>
-          <p className="text-[16px] sm:text-[17px] text-muted-foreground leading-[1.7] max-w-[520px] font-body font-[350]">
-            Paste any music URL for instant BPM, key, frequency spectrum, and
+          <p className="text-[16px] sm:text-[17px] leading-[1.7] max-w-[520px] font-body font-[300] text-italic-accent">
+            Paste any music URL for instant <span className="font-semibold not-italic text-foreground/80">BPM, key, frequency spectrum,</span> and
             cellular resonance analysis — plus an animated lyrics studio for video creators.
           </p>
         </FadeIn>
@@ -379,13 +379,13 @@ export default function HomePage() {
         <FadeIn delay={0.22}>
           <div className="flex items-end gap-8 flex-wrap">
             {[
-              { value: "7", label: "Solfeggio tones" },
-              { value: "7", label: "Frequency bands" },
-              { value: "0–100", label: "Resonance range" },
-              { value: "20", label: "Max batch" },
+              { value: "7", label: "Solfeggio tones", color: "gradient-text-v2" },
+              { value: "7", label: "Frequency bands", color: "gradient-text-v2" },
+              { value: "0–100", label: "Resonance range", color: "gradient-text" },
+              { value: "20", label: "Max batch", color: "gradient-text" },
             ].map((stat) => (
-              <div key={stat.label} className="flex flex-col gap-0.5">
-                <span className="data-num text-[26px] text-foreground">{stat.value}</span>
+              <div key={stat.label} className="flex flex-col gap-1">
+                <span className={`text-big-num text-[30px] ${stat.color}`}>{stat.value}</span>
                 <span className="label-xs">{stat.label}</span>
               </div>
             ))}
@@ -414,10 +414,14 @@ export default function HomePage() {
       <div className="space-y-7">
         <FadeIn>
           <div className="flex items-baseline justify-between">
-            <h2 className="font-display text-[22px] sm:text-[28px] font-700 tracking-tight">
-              What we analyze
-            </h2>
-            <span className="label-xs opacity-60">{FEATURES.length} modules</span>
+            <div className="space-y-1">
+              <p className="text-wide-display text-muted-foreground/50 mb-1">Analysis modules</p>
+              <h2 className="font-display text-[22px] sm:text-[28px] font-[800] tracking-tight">
+                What we{" "}
+                <span className="gradient-text-v2 italic">analyze</span>
+              </h2>
+            </div>
+            <span className="text-big-num text-[40px] gradient-text opacity-60">{FEATURES.length}</span>
           </div>
         </FadeIn>
 
@@ -440,13 +444,13 @@ export default function HomePage() {
                   <div className={`w-10 h-10 rounded-xl ${feat.iconBg} flex items-center justify-center ring-1 ring-white/8`}>
                     <feat.Icon className={`w-[18px] h-[18px] ${feat.iconColor}`} />
                   </div>
-                  <span className="font-mono-custom text-[10px] text-muted-foreground/35 font-medium tracking-wider">
+                  <span className="font-mono-custom text-[10px] text-muted-foreground/30 font-medium tracking-wider">
                     {feat.num}
                   </span>
                 </div>
                 <div className="space-y-1.5">
-                  <h3 className="font-display font-700 text-[14.5px] tracking-tight">{feat.label}</h3>
-                  <p className="text-[12.5px] text-muted-foreground leading-relaxed font-body">{feat.desc}</p>
+                  <h3 className="font-display font-[700] text-[14.5px] tracking-tight">{feat.label}</h3>
+                  <p className="text-[12.5px] text-muted-foreground leading-relaxed font-body font-[300] italic">{feat.desc}</p>
                 </div>
                 <div className={`w-6 h-0.5 rounded-full ${feat.dotColor} opacity-60`} />
               </div>
