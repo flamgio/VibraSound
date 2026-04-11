@@ -3,6 +3,7 @@ import { useGetAnalysis, getGetAnalysisQueryKey } from "@workspace/api-client-re
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useState, useCallback } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, BarChart, Bar, Cell, RadialBarChart, RadialBar
@@ -11,6 +12,197 @@ import {
   BpmIcon, MusicNoteIcon, EnergyIcon, CellIcon, DnaIcon, FrequencyIcon,
   ArrowLeftIcon, ExternalLinkIcon, AlertIcon, WaveformIcon, YoutubeIcon, SparkleIcon
 } from "@/components/icons";
+
+// ─── Mood & Genre Classifier ───────────────────────────────────────────────────
+function getMoodAndGenre(bpm: number, energy: number, danceability: number) {
+  let genre = "Electronic";
+  if (bpm < 72) genre = "Ambient / Drone";
+  else if (bpm < 90) genre = "Ballad / Soul";
+  else if (bpm < 108) genre = "Pop / R&B";
+  else if (bpm < 122) genre = "Hip-Hop / Funk";
+  else if (bpm < 138) genre = "Dance / House";
+  else if (bpm < 158) genre = "Drum & Bass / Techno";
+  else genre = "Hardcore / Speedcore";
+
+  const e = energy;
+  const d = danceability;
+  let mood = "Relaxed";
+  if (e > 0.75 && d > 0.70) mood = "Euphoric";
+  else if (e > 0.75 && d <= 0.70) mood = "Intense";
+  else if (e > 0.55 && d > 0.65) mood = "Groovy";
+  else if (e > 0.55 && d <= 0.65) mood = "Energetic";
+  else if (e <= 0.55 && d > 0.60) mood = "Chill";
+  else if (e <= 0.38 && d <= 0.42) mood = "Melancholic";
+  else mood = "Calm";
+
+  const moodColors: Record<string, string> = {
+    Euphoric: "#f472b6",
+    Intense: "#fb923c",
+    Groovy: "#a78bfa",
+    Energetic: "#38bdf8",
+    Chill: "#34d399",
+    Melancholic: "#818cf8",
+    Calm: "#67e8f9",
+    Relaxed: "#6ee7b7",
+  };
+
+  return { genre, mood, moodColor: moodColors[mood] ?? "#a78bfa" };
+}
+
+// ─── Shareable PNG Card ─────────────────────────────────────────────────────────
+async function downloadShareCard(analysis: {
+  title: string; bpm: number; key: string;
+  energy: number; danceability: number;
+  cellularResonance: { score: number; category: string };
+  dominantFrequency: number;
+}) {
+  const { genre, mood, moodColor } = getMoodAndGenre(analysis.bpm, analysis.energy, analysis.danceability);
+  const W = 1200, H = 630;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#0d0b1e");
+  bg.addColorStop(0.5, "#0a1020");
+  bg.addColorStop(1, "#0d0b1e");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle grid
+  ctx.strokeStyle = "rgba(150,120,255,0.04)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Aurora orb top-left
+  const orb1 = ctx.createRadialGradient(180, 120, 0, 180, 120, 280);
+  orb1.addColorStop(0, "rgba(139,92,246,0.2)");
+  orb1.addColorStop(1, "rgba(139,92,246,0)");
+  ctx.fillStyle = orb1;
+  ctx.fillRect(0, 0, W, H);
+
+  // Aurora orb bottom-right
+  const orb2 = ctx.createRadialGradient(W - 150, H - 100, 0, W - 150, H - 100, 250);
+  orb2.addColorStop(0, "rgba(56,189,248,0.15)");
+  orb2.addColorStop(1, "rgba(56,189,248,0)");
+  ctx.fillStyle = orb2;
+  ctx.fillRect(0, 0, W, H);
+
+  // Top accent bar
+  const topBar = ctx.createLinearGradient(0, 0, W, 0);
+  topBar.addColorStop(0, "#7dd3fc");
+  topBar.addColorStop(0.5, "#ffffff");
+  topBar.addColorStop(1, "rgba(125,211,252,0)");
+  ctx.fillStyle = topBar;
+  ctx.fillRect(0, 0, W, 3);
+
+  // Card border
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+  // Brand badge
+  ctx.font = "600 13px 'JetBrains Mono', monospace";
+  ctx.fillStyle = "rgba(125,211,252,0.7)";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText("VIBRASOUND  ·  SIGNAL ANALYSIS", 52, 44);
+
+  // Title
+  ctx.font = "bold 36px 'Syne', 'Arial', sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  const titleText = analysis.title.length > 48 ? analysis.title.slice(0, 48) + "…" : analysis.title;
+  ctx.fillText(titleText, 52, 150);
+
+  // Mood + Genre tags
+  ctx.font = "600 14px 'JetBrains Mono', monospace";
+  ctx.fillStyle = moodColor;
+  ctx.fillText(`♪  ${mood}  ·  ${genre}`, 52, 185);
+
+  // Divider
+  const div = ctx.createLinearGradient(52, 0, W - 52, 0);
+  div.addColorStop(0, "rgba(255,255,255,0.15)");
+  div.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.strokeStyle = div;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(52, 210); ctx.lineTo(W - 52, 210); ctx.stroke();
+
+  // Metrics grid
+  const metrics = [
+    { label: "BPM", value: Math.round(analysis.bpm).toString(), color: "#a78bfa" },
+    { label: "KEY", value: analysis.key, color: "#38bdf8" },
+    { label: "ENERGY", value: `${(analysis.energy * 100).toFixed(0)}%`, color: "#f59e0b" },
+    { label: "DANCE", value: `${(analysis.danceability * 100).toFixed(0)}%`, color: "#34d399" },
+    { label: "RESONANCE", value: `${analysis.cellularResonance.score}/100`, color: "#fb7185" },
+    { label: "FREQ", value: `${analysis.dominantFrequency}Hz`, color: "#67e8f9" },
+  ];
+
+  const cols = 3, startX = 52, startY = 250, colW = (W - 104) / cols, rowH = 140;
+  for (let i = 0; i < metrics.length; i++) {
+    const m = metrics[i];
+    const col = i % cols, row = Math.floor(i / cols);
+    const x = startX + col * colW, y = startY + row * rowH;
+
+    // Card bg
+    ctx.fillStyle = "rgba(255,255,255,0.035)";
+    roundRect(ctx, x, y, colW - 16, 115, 16);
+    ctx.fill();
+
+    // Left color bar
+    ctx.fillStyle = m.color;
+    roundRect(ctx, x, y, 3, 115, [2, 0, 0, 2]);
+    ctx.fill();
+
+    ctx.font = "600 11px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(m.label, x + 20, y + 38);
+
+    ctx.font = "bold 38px 'JetBrains Mono', monospace";
+    ctx.fillStyle = m.color;
+    ctx.fillText(m.value, x + 20, y + 88);
+  }
+
+  // Footer
+  ctx.font = "500 12px 'JetBrains Mono', monospace";
+  ctx.fillStyle = "rgba(255,255,255,0.2)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("vibrasound.app  ·  Music Rhythm & Cellular Resonance Analyzer", W / 2, H - 28);
+
+  // Download
+  const url = canvas.toDataURL("image/png");
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${analysis.title.replace(/[^a-z0-9]/gi, "_").slice(0, 40)}-vibrasound.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  r: number | [number, number, number, number]
+) {
+  const [tl, tr, br, bl] = Array.isArray(r) ? r : [r, r, r, r];
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  ctx.lineTo(x + w, y + h - br);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  ctx.lineTo(x + bl, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  ctx.lineTo(x, y + tl);
+  ctx.quadraticCurveTo(x, y, x + tl, y);
+  ctx.closePath();
+}
 
 function CategoryBadge({ category }: { category: string }) {
   const map: Record<string, { label: string; cls: string }> = {
@@ -68,10 +260,21 @@ function isYouTubeUrl(url: string) {
 export default function AnalysisDetail() {
   const params = useParams();
   const id = params.id ? parseInt(params.id) : 0;
+  const [isSharing, setIsSharing] = useState(false);
 
   const { data: analysis, isLoading, isError, error } = useGetAnalysis(id, {
     query: { enabled: !!id && !isNaN(id), queryKey: getGetAnalysisQueryKey(id) }
   });
+
+  const handleShare = useCallback(async () => {
+    if (!analysis) return;
+    setIsSharing(true);
+    try {
+      await downloadShareCard(analysis);
+    } finally {
+      setIsSharing(false);
+    }
+  }, [analysis]);
 
   if (isError) {
     return (
@@ -182,6 +385,14 @@ export default function AnalysisDetail() {
               Get Lyrics + Animations
             </button>
           </Link>
+          <button
+            onClick={handleShare}
+            disabled={isSharing}
+            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-sky-400 hover:text-sky-300 transition-colors group font-body disabled:opacity-50"
+          >
+            <SparkleIcon className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+            {isSharing ? "Generating…" : "Share Card"}
+          </button>
         </div>
       </motion.div>
 
@@ -248,6 +459,56 @@ export default function AnalysisDetail() {
           </motion.div>
         ))}
       </div>
+
+      {/* Mood & Genre Card */}
+      {(() => {
+        const { genre, mood, moodColor } = getMoodAndGenre(analysis.bpm, analysis.energy, analysis.danceability);
+        const moodBgs: Record<string, string> = {
+          Euphoric: "from-pink-900/40 to-pink-950/20",
+          Intense: "from-orange-900/40 to-orange-950/20",
+          Groovy: "from-violet-900/40 to-violet-950/20",
+          Energetic: "from-sky-900/40 to-sky-950/20",
+          Chill: "from-emerald-900/40 to-emerald-950/20",
+          Melancholic: "from-indigo-900/40 to-indigo-950/20",
+          Calm: "from-cyan-900/40 to-cyan-950/20",
+          Relaxed: "from-teal-900/40 to-teal-950/20",
+        };
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${moodBgs[mood] ?? "from-violet-900/40 to-violet-950/20"} ring-1 ring-white/8`}>
+              <div className="absolute top-0 inset-x-0 h-[2px] rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${moodColor}, transparent)` }} />
+              <div className="flex flex-wrap items-center justify-between gap-5">
+                <div className="space-y-1">
+                  <p className="text-wide-display text-white/40">Mood & Genre Analysis</p>
+                  <div className="flex items-center gap-3 flex-wrap mt-2">
+                    <span className="font-display text-[2rem] font-[800] tracking-tight" style={{ color: moodColor }}>
+                      {mood}
+                    </span>
+                    <span className="text-white/30 text-[1.5rem] font-light">·</span>
+                    <span className="font-body text-[1.1rem] font-[500] text-white/70 italic">{genre}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {[
+                    { key: "Energy", val: `${(analysis.energy * 100).toFixed(0)}%`, color: "#f59e0b" },
+                    { key: "Dance", val: `${(analysis.danceability * 100).toFixed(0)}%`, color: "#34d399" },
+                    { key: "BPM", val: Math.round(analysis.bpm).toString(), color: moodColor },
+                  ].map(m => (
+                    <div key={m.key} className="text-center px-4 py-3 rounded-xl bg-white/5 ring-1 ring-white/8 min-w-[72px]">
+                      <p className="text-big-num text-[22px]" style={{ color: m.color }}>{m.val}</p>
+                      <p className="label-xs mt-1">{m.key}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        );
+      })()}
 
       {/* Cellular Resonance + Frequency Spectrum */}
       <div className="grid gap-4 lg:grid-cols-3">

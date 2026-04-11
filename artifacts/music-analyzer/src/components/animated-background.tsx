@@ -186,7 +186,6 @@ export function AnimatedBackground() {
       drawOrbs();
       drawGrid();
       drawScanLine();
-      drawWaves();
       spawnParticle();
       drawParticles();
       drawSpectrum();

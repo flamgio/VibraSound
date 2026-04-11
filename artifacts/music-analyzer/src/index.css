@@ -134,33 +134,33 @@
   --elevate-1: rgba(255,255,255,.025);
   --elevate-2: rgba(255,255,255,.05);
 
-  /* Deep space obsidian */
-  --background: 240 18% 4%;
-  --foreground: 220 20% 94%;
-  --border: 240 20% 13%;
-  --card: 240 20% 7%;
-  --card-foreground: 220 20% 94%;
-  --card-border: 240 22% 12%;
-  --sidebar: 240 20% 5.5%;
-  --sidebar-foreground: 220 20% 94%;
-  --sidebar-border: 240 20% 12%;
+  /* Deep midnight — visible but still dark */
+  --background: 240 14% 10%;
+  --foreground: 220 22% 95%;
+  --border: 240 16% 22%;
+  --card: 240 14% 15%;
+  --card-foreground: 220 22% 95%;
+  --card-border: 240 18% 26%;
+  --sidebar: 240 14% 11%;
+  --sidebar-foreground: 220 22% 95%;
+  --sidebar-border: 240 16% 22%;
   --sidebar-primary: 258 90% 75%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 22% 11%;
-  --sidebar-accent-foreground: 220 20% 94%;
+  --sidebar-accent: 240 14% 18%;
+  --sidebar-accent-foreground: 220 22% 95%;
   --sidebar-ring: 258 90% 75%;
-  --popover: 240 20% 7%;
-  --popover-foreground: 220 20% 94%;
-  --popover-border: 240 22% 14%;
+  --popover: 240 14% 13%;
+  --popover-foreground: 220 22% 95%;
+  --popover-border: 240 18% 24%;
 
   /* Electric violet primary */
   --primary: 258 90% 75%;
-  --primary-foreground: 240 18% 4%;
+  --primary-foreground: 240 14% 8%;
 
-  --secondary: 240 22% 11%;
-  --secondary-foreground: 220 20% 94%;
-  --muted: 240 20% 11%;
-  --muted-foreground: 240 12% 48%;
+  --secondary: 240 14% 18%;
+  --secondary-foreground: 220 22% 95%;
+  --muted: 240 14% 18%;
+  --muted-foreground: 240 12% 62%;
 
   /* Electric cyan accent */
   --accent: 196 100% 12%;
@@ -168,7 +168,7 @@
 
   --destructive: 0 70% 58%;
   --destructive-foreground: 0 0% 100%;
-  --input: 240 20% 14%;
+  --input: 240 14% 20%;
   --ring: 258 90% 75%;
 
   /* Vivid chart colors */

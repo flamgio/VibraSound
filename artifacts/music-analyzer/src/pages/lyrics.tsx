@@ -228,9 +228,83 @@ export default function LyricsPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [editingLine, setEditingLine] = useState<number | null>(null);
-  const [tab, setTab] = useState<"preview" | "editor">("preview");
+  const [tab, setTab] = useState<"preview" | "editor" | "timestamps">("preview");
+  // Timestamp sync state
+  const [timestamps, setTimestamps] = useState<(number | null)[]>([]);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerElapsed, setTimerElapsed] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerStartRef = useRef<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Sync timestamps array length with editedLines
+  useEffect(() => {
+    setTimestamps(prev => {
+      const next = [...prev];
+      while (next.length < editedLines.length) next.push(null);
+      return next.slice(0, editedLines.length);
+    });
+  }, [editedLines.length]);
+
+  const startTimer = () => {
+    timerStartRef.current = Date.now() - timerElapsed * 1000;
+    setTimerRunning(true);
+    timerRef.current = setInterval(() => {
+      setTimerElapsed(Math.floor((Date.now() - timerStartRef.current) / 1000));
+    }, 100);
+  };
+
+  const pauseTimer = () => {
+    setTimerRunning(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const resetTimer = () => {
+    pauseTimer();
+    setTimerElapsed(0);
+    setTimestamps(editedLines.map(() => null));
+  };
+
+  const markTimestamp = (lineIdx: number) => {
+    setTimestamps(prev => {
+      const next = [...prev];
+      next[lineIdx] = timerElapsed;
+      return next;
+    });
+  };
+
+  const exportSRT = () => {
+    const srtFmt = (secs: number) => {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")},000`;
+    };
+    const lines: string[] = [];
+    const stamped = timestamps.map((t, i) => ({ t, line: editedLines[i] })).filter(x => x.t !== null) as { t: number; line: string }[];
+    stamped.sort((a, b) => a.t - b.t);
+    stamped.forEach((entry, i) => {
+      const start = entry.t;
+      const end = stamped[i + 1]?.t ?? start + 5;
+      lines.push(`${i + 1}\n${srtFmt(start)} --> ${srtFmt(end)}\n${entry.line}\n`);
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(lyricsState?.song || "lyrics").replace(/[^a-z0-9]/gi, "_")}.srt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  };
+
+  const fmtTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
 
   const fetchLyrics = useCallback(async () => {
     if (!analysis) return;
@@ -498,7 +572,7 @@ export default function LyricsPage() {
         <div className="space-y-5">
           {/* Tab navigation */}
           <div className="flex items-center gap-2 flex-wrap">
-            {(["preview", "editor"] as const).map(t => (
+            {(["preview", "editor", "timestamps"] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -506,7 +580,7 @@ export default function LyricsPage() {
                   tab === t ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t === "preview" ? "Preview" : "Edit Lyrics"}
+                {t === "preview" ? "Preview" : t === "editor" ? "Edit Lyrics" : "⏱ Timestamps"}
               </button>
             ))}
             <div className="ml-auto flex items-center gap-2">
@@ -568,6 +642,83 @@ export default function LyricsPage() {
                   + Add line
                 </button>
               </div>
+            </motion.div>
+          )}
+
+          {tab === "timestamps" && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+              {/* Timer controls */}
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/20 ring-1 ring-border/40">
+                <div className="font-mono-custom text-[28px] font-[300] text-foreground tabular-nums min-w-[90px]">
+                  {fmtTimer(timerElapsed)}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={timerRunning ? pauseTimer : startTimer}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${timerRunning ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30 hover:bg-amber-500/30" : "bg-primary/20 text-primary ring-1 ring-primary/30 hover:bg-primary/30"}`}
+                  >
+                    {timerRunning ? "⏸ Pause" : "▶ Start"}
+                  </button>
+                  <button
+                    onClick={resetTimer}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-muted/60 text-muted-foreground hover:text-foreground ring-1 ring-border/40 transition-all"
+                  >
+                    ↩ Reset
+                  </button>
+                  <button
+                    onClick={exportSRT}
+                    disabled={timestamps.every(t => t === null)}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30 hover:bg-emerald-500/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    ↓ Export .SRT
+                  </button>
+                </div>
+                <p className="ml-auto text-[11px] text-muted-foreground/60 font-body italic hidden sm:block">
+                  Press "Mark" while music plays to sync each line
+                </p>
+              </div>
+
+              {/* Lines with mark buttons */}
+              <div className="rounded-2xl border border-border/50 bg-muted/10 max-h-[450px] overflow-y-auto divide-y divide-border/20">
+                {editedLines.map((line, i) => {
+                  const ts = timestamps[i];
+                  return (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors group">
+                      <span className="font-mono-custom text-[10px] text-muted-foreground/40 w-6 text-right shrink-0">{i + 1}</span>
+                      <span className="flex-1 text-sm font-body text-foreground/80 truncate">{line || <span className="italic opacity-30">(empty)</span>}</span>
+                      {ts !== null ? (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-mono-custom text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg ring-1 ring-emerald-500/20">
+                            {fmtTimer(ts)}
+                          </span>
+                          <button
+                            onClick={() => markTimestamp(i)}
+                            className="opacity-0 group-hover:opacity-100 text-[11px] px-2 py-0.5 rounded-lg bg-primary/15 text-primary hover:bg-primary/25 transition-all font-semibold"
+                          >
+                            Re-mark
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => markTimestamp(i)}
+                          className={`shrink-0 px-3 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                            timerRunning
+                              ? "bg-primary/20 text-primary ring-1 ring-primary/30 hover:bg-primary/35 opacity-100"
+                              : "opacity-40 bg-muted/60 text-muted-foreground cursor-not-allowed"
+                          }`}
+                          disabled={!timerRunning}
+                        >
+                          Mark ▶
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11.5px] text-muted-foreground/50 font-body italic px-1">
+                {timestamps.filter(t => t !== null).length} / {editedLines.length} lines timestamped
+                {timestamps.filter(t => t !== null).length > 0 && " · Export as .SRT to use in video editors"}
+              </p>
             </motion.div>
           )}
 

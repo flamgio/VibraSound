@@ -218,66 +218,84 @@ const FEATURES = [
     label: "Tempo & BPM",
     desc: "Precision beat-per-minute detection with tempo variation mapping across the full track timeline.",
     Icon: BpmIcon,
-    accent: "from-violet-500/20 to-violet-500/5",
-    border: "border-violet-500/18",
-    iconBg: "bg-violet-500/12",
-    iconColor: "text-violet-400",
-    dotColor: "bg-violet-500",
+    cardBg: "linear-gradient(145deg, #1e1035 0%, #160d2a 55%, #0d0820 100%)",
+    topLine: "linear-gradient(90deg, #a78bfa, #7c3aed, transparent)",
+    glowRing: "rgba(167,139,250,0.35)",
+    iconBg: "bg-violet-500/20",
+    iconColor: "text-violet-300",
+    numColor: "rgba(167,139,250,0.09)",
+    tagColor: "text-violet-400",
+    hoverGlow: "rgba(139,92,246,0.15)",
   },
   {
     num: "02",
     label: "Musical Key",
     desc: "Root key and scale identification using chromatic harmonic analysis and pitch-class profiling.",
     Icon: MusicNoteIcon,
-    accent: "from-sky-500/20 to-sky-500/5",
-    border: "border-sky-500/18",
-    iconBg: "bg-sky-500/12",
-    iconColor: "text-sky-400",
-    dotColor: "bg-sky-500",
+    cardBg: "linear-gradient(145deg, #0a1e35 0%, #071628 55%, #040e1c 100%)",
+    topLine: "linear-gradient(90deg, #38bdf8, #0284c7, transparent)",
+    glowRing: "rgba(56,189,248,0.35)",
+    iconBg: "bg-sky-500/20",
+    iconColor: "text-sky-300",
+    numColor: "rgba(56,189,248,0.09)",
+    tagColor: "text-sky-400",
+    hoverGlow: "rgba(14,165,233,0.15)",
   },
   {
     num: "03",
     label: "7-Band Spectrum",
     desc: "Sub-bass through presence frequency energy distribution across the full auditory spectrum.",
     Icon: FrequencyIcon,
-    accent: "from-amber-500/20 to-amber-500/5",
-    border: "border-amber-500/18",
-    iconBg: "bg-amber-500/12",
-    iconColor: "text-amber-400",
-    dotColor: "bg-amber-500",
+    cardBg: "linear-gradient(145deg, #291a05 0%, #201305 55%, #130c02 100%)",
+    topLine: "linear-gradient(90deg, #f59e0b, #d97706, transparent)",
+    glowRing: "rgba(245,158,11,0.35)",
+    iconBg: "bg-amber-500/20",
+    iconColor: "text-amber-300",
+    numColor: "rgba(245,158,11,0.09)",
+    tagColor: "text-amber-400",
+    hoverGlow: "rgba(217,119,6,0.15)",
   },
   {
     num: "04",
     label: "Cellular Resonance",
     desc: "Solfeggio alignment score (0–100) measuring bioacoustic and biofield impact potential.",
     Icon: CellIcon,
-    accent: "from-emerald-500/20 to-emerald-500/5",
-    border: "border-emerald-500/18",
-    iconBg: "bg-emerald-500/12",
-    iconColor: "text-emerald-400",
-    dotColor: "bg-emerald-500",
+    cardBg: "linear-gradient(145deg, #071e14 0%, #051610 55%, #030e09 100%)",
+    topLine: "linear-gradient(90deg, #34d399, #059669, transparent)",
+    glowRing: "rgba(52,211,153,0.35)",
+    iconBg: "bg-emerald-500/20",
+    iconColor: "text-emerald-300",
+    numColor: "rgba(52,211,153,0.09)",
+    tagColor: "text-emerald-400",
+    hoverGlow: "rgba(5,150,105,0.15)",
   },
   {
     num: "05",
     label: "Healing Frequencies",
     desc: "Alignment with 396, 432, 528, 639, 741, 852, 963 Hz — the solfeggio sacred tone matrix.",
     Icon: DnaIcon,
-    accent: "from-rose-500/20 to-rose-500/5",
-    border: "border-rose-500/18",
-    iconBg: "bg-rose-500/12",
-    iconColor: "text-rose-400",
-    dotColor: "bg-rose-500",
+    cardBg: "linear-gradient(145deg, #260a14 0%, #1e0810 55%, #14050a 100%)",
+    topLine: "linear-gradient(90deg, #fb7185, #e11d48, transparent)",
+    glowRing: "rgba(251,113,133,0.35)",
+    iconBg: "bg-rose-500/20",
+    iconColor: "text-rose-300",
+    numColor: "rgba(251,113,133,0.09)",
+    tagColor: "text-rose-400",
+    hoverGlow: "rgba(225,29,72,0.15)",
   },
   {
     num: "06",
     label: "Lyrics + Video Export",
     desc: "Animated lyrics editor with 6 animation styles and 1080p WebM video export for creators.",
     Icon: FilmIcon,
-    accent: "from-indigo-500/20 to-indigo-500/5",
-    border: "border-indigo-500/18",
-    iconBg: "bg-indigo-500/12",
-    iconColor: "text-indigo-400",
-    dotColor: "bg-indigo-500",
+    cardBg: "linear-gradient(145deg, #111230 0%, #0c0e28 55%, #07081c 100%)",
+    topLine: "linear-gradient(90deg, #818cf8, #4f46e5, transparent)",
+    glowRing: "rgba(129,140,248,0.35)",
+    iconBg: "bg-indigo-500/20",
+    iconColor: "text-indigo-300",
+    numColor: "rgba(129,140,248,0.09)",
+    tagColor: "text-indigo-400",
+    hoverGlow: "rgba(79,70,229,0.15)",
   },
 ];
 
@@ -425,34 +443,77 @@ export default function HomePage() {
           </div>
         </FadeIn>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURES.map((feat, i) => (
             <motion.div
               key={feat.num}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
-                delay: 0.04 + i * 0.07,
-                duration: 0.55,
+                delay: 0.04 + i * 0.08,
+                duration: 0.6,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className={`relative group overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${feat.accent} ring-1 ${feat.border} cursor-default transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}
+              className="group cursor-default"
+              style={{ perspective: "1000px" }}
             >
-              <div className="absolute inset-0 bg-card/65 backdrop-blur-sm" />
-              <div className="relative z-10 space-y-3.5">
-                <div className="flex items-start justify-between">
-                  <div className={`w-10 h-10 rounded-xl ${feat.iconBg} flex items-center justify-center ring-1 ring-white/8`}>
-                    <feat.Icon className={`w-[18px] h-[18px] ${feat.iconColor}`} />
+              <div
+                className="relative overflow-hidden rounded-2xl transition-all duration-400 hover:-translate-y-2"
+                style={{
+                  background: feat.cardBg,
+                  boxShadow: `0 1px 0 0 rgba(255,255,255,0.06) inset, 0 4px 24px rgba(0,0,0,0.45)`,
+                  border: "1px solid rgba(255,255,255,0.07)",
+                }}
+              >
+                {/* Colored top line */}
+                <div
+                  className="absolute top-0 inset-x-0 h-[2px]"
+                  style={{ background: feat.topLine }}
+                />
+
+                {/* Glow on hover (pseudo-overlay) */}
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
+                  style={{ background: `radial-gradient(ellipse at 50% 0%, ${feat.hoverGlow} 0%, transparent 70%)` }}
+                />
+
+                {/* Watermark number */}
+                <span
+                  className="absolute top-3 right-4 font-display font-[900] leading-none select-none pointer-events-none"
+                  style={{ fontSize: 64, color: feat.numColor }}
+                >
+                  {feat.num}
+                </span>
+
+                <div className="relative p-6 space-y-5">
+                  {/* Icon */}
+                  <div
+                    className={`w-12 h-12 rounded-xl ${feat.iconBg} flex items-center justify-center`}
+                    style={{
+                      boxShadow: `0 0 20px ${feat.glowRing}, 0 0 0 1px rgba(255,255,255,0.08) inset`,
+                    }}
+                  >
+                    <feat.Icon className={`w-[22px] h-[22px] ${feat.iconColor}`} />
                   </div>
-                  <span className="font-mono-custom text-[10px] text-muted-foreground/30 font-medium tracking-wider">
-                    {feat.num}
-                  </span>
+
+                  {/* Text */}
+                  <div className="space-y-2">
+                    <h3 className="font-display font-[700] text-[15px] tracking-tight text-white/90">
+                      {feat.label}
+                    </h3>
+                    <p className="text-[12.5px] leading-relaxed font-body font-[300] italic text-white/45">
+                      {feat.desc}
+                    </p>
+                  </div>
+
+                  {/* Tag */}
+                  <div className="flex items-center gap-2">
+                    <div className="h-px flex-1" style={{ background: feat.topLine }} />
+                    <span className={`font-mono-custom text-[10px] font-[600] tracking-widest uppercase ${feat.tagColor} opacity-70`}>
+                      module
+                    </span>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <h3 className="font-display font-[700] text-[14.5px] tracking-tight">{feat.label}</h3>
-                  <p className="text-[12.5px] text-muted-foreground leading-relaxed font-body font-[300] italic">{feat.desc}</p>
-                </div>
-                <div className={`w-6 h-0.5 rounded-full ${feat.dotColor} opacity-60`} />
               </div>
             </motion.div>
           ))}
