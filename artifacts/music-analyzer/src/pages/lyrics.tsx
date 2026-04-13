@@ -227,6 +227,7 @@ export default function LyricsPage() {
   const [bgPreset, setBgPreset] = useState<BgChoice>("gradient-dark");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [editingLine, setEditingLine] = useState<number | null>(null);
   const [tab, setTab] = useState<"preview" | "editor" | "timestamps">("preview");
   // Timestamp sync state
@@ -350,12 +351,24 @@ export default function LyricsPage() {
   const handleDownload = async () => {
     if (editedLines.length === 0) return;
     setIsDownloading(true);
+    setDownloadError(null);
+
+    if (typeof MediaRecorder === "undefined" || !HTMLCanvasElement.prototype.captureStream) {
+      setDownloadError("Video export is not supported in this browser. Try Chrome or Edge.");
+      setIsDownloading(false);
+      return;
+    }
 
     const W = 1920, H = 1080;
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setDownloadError("Canvas not available. Please try again.");
+      setIsDownloading(false);
+      return;
+    }
 
     // Detect the best supported MIME type
     const mimeTypes = [
@@ -365,6 +378,12 @@ export default function LyricsPage() {
     ];
     const mimeType = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) ?? "";
 
+    if (!mimeType) {
+      setDownloadError("WebM video recording not supported in this browser. Use Chrome or Edge.");
+      setIsDownloading(false);
+      return;
+    }
+
     const stream = canvas.captureStream(30);
     const chunks: Blob[] = [];
 
@@ -372,7 +391,13 @@ export default function LyricsPage() {
     try {
       recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
     } catch {
-      recorder = new MediaRecorder(stream);
+      try {
+        recorder = new MediaRecorder(stream);
+      } catch {
+        setDownloadError("Could not start video recording. Please try Chrome or Edge.");
+        setIsDownloading(false);
+        return;
+      }
     }
 
     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
@@ -583,13 +608,19 @@ export default function LyricsPage() {
                 {t === "preview" ? "Preview" : t === "editor" ? "Edit Lyrics" : "⏱ Timestamps"}
               </button>
             ))}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2 flex-wrap">
+              {downloadError && (
+                <span className="text-[11px] text-destructive max-w-[200px] text-right leading-tight">
+                  {downloadError}
+                </span>
+              )}
               <Button
                 size="sm"
                 variant="outline"
                 className="h-8 px-4 rounded-lg text-xs gap-1.5"
                 onClick={handleDownload}
                 disabled={isDownloading || editedLines.length === 0}
+                title="Export animated lyrics as a 1920×1080 WebM video (Chrome/Edge recommended)"
               >
                 {isDownloading ? (
                   <><WaveformIcon className="w-3.5 h-3.5 animate-pulse" />Exporting...</>

@@ -218,84 +218,96 @@ const FEATURES = [
     label: "Tempo & BPM",
     desc: "Precision beat-per-minute detection with tempo variation mapping across the full track timeline.",
     Icon: BpmIcon,
-    cardBg: "linear-gradient(145deg, #1e1035 0%, #160d2a 55%, #0d0820 100%)",
-    topLine: "linear-gradient(90deg, #a78bfa, #7c3aed, transparent)",
-    glowRing: "rgba(167,139,250,0.35)",
-    iconBg: "bg-violet-500/20",
-    iconColor: "text-violet-300",
-    numColor: "rgba(167,139,250,0.09)",
-    tagColor: "text-violet-400",
-    hoverGlow: "rgba(139,92,246,0.15)",
+    cardBg: "linear-gradient(145deg, #5b21b6 0%, #3b0764 55%, #1e0a3c 100%)",
+    innerGlow: "radial-gradient(ellipse at 30% 0%, rgba(167,139,250,0.28) 0%, transparent 65%)",
+    topLine: "linear-gradient(90deg, #c4b5fd, #a78bfa, #7c3aed, transparent)",
+    glowRing: "rgba(167,139,250,0.45)",
+    iconBg: "bg-violet-400/25",
+    iconColor: "text-violet-200",
+    numColor: "rgba(196,181,253,0.12)",
+    tagColor: "text-violet-300",
+    hoverGlow: "rgba(139,92,246,0.22)",
+    border: "rgba(167,139,250,0.18)",
   },
   {
     num: "02",
     label: "Musical Key",
     desc: "Root key and scale identification using chromatic harmonic analysis and pitch-class profiling.",
     Icon: MusicNoteIcon,
-    cardBg: "linear-gradient(145deg, #0a1e35 0%, #071628 55%, #040e1c 100%)",
-    topLine: "linear-gradient(90deg, #38bdf8, #0284c7, transparent)",
-    glowRing: "rgba(56,189,248,0.35)",
-    iconBg: "bg-sky-500/20",
-    iconColor: "text-sky-300",
-    numColor: "rgba(56,189,248,0.09)",
-    tagColor: "text-sky-400",
-    hoverGlow: "rgba(14,165,233,0.15)",
+    cardBg: "linear-gradient(145deg, #0369a1 0%, #075985 55%, #0a1e35 100%)",
+    innerGlow: "radial-gradient(ellipse at 30% 0%, rgba(56,189,248,0.26) 0%, transparent 65%)",
+    topLine: "linear-gradient(90deg, #7dd3fc, #38bdf8, #0284c7, transparent)",
+    glowRing: "rgba(56,189,248,0.45)",
+    iconBg: "bg-sky-400/25",
+    iconColor: "text-sky-200",
+    numColor: "rgba(125,211,252,0.12)",
+    tagColor: "text-sky-300",
+    hoverGlow: "rgba(14,165,233,0.22)",
+    border: "rgba(56,189,248,0.18)",
   },
   {
     num: "03",
     label: "7-Band Spectrum",
     desc: "Sub-bass through presence frequency energy distribution across the full auditory spectrum.",
     Icon: FrequencyIcon,
-    cardBg: "linear-gradient(145deg, #291a05 0%, #201305 55%, #130c02 100%)",
-    topLine: "linear-gradient(90deg, #f59e0b, #d97706, transparent)",
-    glowRing: "rgba(245,158,11,0.35)",
-    iconBg: "bg-amber-500/20",
-    iconColor: "text-amber-300",
-    numColor: "rgba(245,158,11,0.09)",
-    tagColor: "text-amber-400",
-    hoverGlow: "rgba(217,119,6,0.15)",
+    cardBg: "linear-gradient(145deg, #b45309 0%, #92400e 55%, #291a05 100%)",
+    innerGlow: "radial-gradient(ellipse at 30% 0%, rgba(251,191,36,0.24) 0%, transparent 65%)",
+    topLine: "linear-gradient(90deg, #fde68a, #fbbf24, #d97706, transparent)",
+    glowRing: "rgba(245,158,11,0.45)",
+    iconBg: "bg-amber-400/25",
+    iconColor: "text-amber-200",
+    numColor: "rgba(253,230,138,0.12)",
+    tagColor: "text-amber-300",
+    hoverGlow: "rgba(217,119,6,0.22)",
+    border: "rgba(245,158,11,0.18)",
   },
   {
     num: "04",
     label: "Cellular Resonance",
     desc: "Solfeggio alignment score (0–100) measuring bioacoustic and biofield impact potential.",
     Icon: CellIcon,
-    cardBg: "linear-gradient(145deg, #071e14 0%, #051610 55%, #030e09 100%)",
-    topLine: "linear-gradient(90deg, #34d399, #059669, transparent)",
-    glowRing: "rgba(52,211,153,0.35)",
-    iconBg: "bg-emerald-500/20",
-    iconColor: "text-emerald-300",
-    numColor: "rgba(52,211,153,0.09)",
-    tagColor: "text-emerald-400",
-    hoverGlow: "rgba(5,150,105,0.15)",
+    cardBg: "linear-gradient(145deg, #059669 0%, #065f46 55%, #071e14 100%)",
+    innerGlow: "radial-gradient(ellipse at 30% 0%, rgba(52,211,153,0.26) 0%, transparent 65%)",
+    topLine: "linear-gradient(90deg, #6ee7b7, #34d399, #059669, transparent)",
+    glowRing: "rgba(52,211,153,0.45)",
+    iconBg: "bg-emerald-400/25",
+    iconColor: "text-emerald-200",
+    numColor: "rgba(110,231,183,0.12)",
+    tagColor: "text-emerald-300",
+    hoverGlow: "rgba(5,150,105,0.22)",
+    border: "rgba(52,211,153,0.18)",
   },
   {
     num: "05",
     label: "Healing Frequencies",
     desc: "Alignment with 396, 432, 528, 639, 741, 852, 963 Hz — the solfeggio sacred tone matrix.",
     Icon: DnaIcon,
-    cardBg: "linear-gradient(145deg, #260a14 0%, #1e0810 55%, #14050a 100%)",
-    topLine: "linear-gradient(90deg, #fb7185, #e11d48, transparent)",
-    glowRing: "rgba(251,113,133,0.35)",
-    iconBg: "bg-rose-500/20",
-    iconColor: "text-rose-300",
-    numColor: "rgba(251,113,133,0.09)",
-    tagColor: "text-rose-400",
-    hoverGlow: "rgba(225,29,72,0.15)",
+    cardBg: "linear-gradient(145deg, #be123c 0%, #9f1239 55%, #4c0519 100%)",
+    innerGlow: "radial-gradient(ellipse at 30% 0%, rgba(251,113,133,0.26) 0%, transparent 65%)",
+    topLine: "linear-gradient(90deg, #fda4af, #fb7185, #e11d48, transparent)",
+    glowRing: "rgba(251,113,133,0.45)",
+    iconBg: "bg-rose-400/25",
+    iconColor: "text-rose-200",
+    numColor: "rgba(253,164,175,0.12)",
+    tagColor: "text-rose-300",
+    hoverGlow: "rgba(225,29,72,0.22)",
+    border: "rgba(251,113,133,0.18)",
   },
   {
     num: "06",
     label: "Lyrics + Video Export",
     desc: "Animated lyrics editor with 6 animation styles and 1080p WebM video export for creators.",
     Icon: FilmIcon,
-    cardBg: "linear-gradient(145deg, #111230 0%, #0c0e28 55%, #07081c 100%)",
-    topLine: "linear-gradient(90deg, #818cf8, #4f46e5, transparent)",
-    glowRing: "rgba(129,140,248,0.35)",
-    iconBg: "bg-indigo-500/20",
-    iconColor: "text-indigo-300",
-    numColor: "rgba(129,140,248,0.09)",
-    tagColor: "text-indigo-400",
-    hoverGlow: "rgba(79,70,229,0.15)",
+    cardBg: "linear-gradient(145deg, #4338ca 0%, #312e81 55%, #1e1b4b 100%)",
+    innerGlow: "radial-gradient(ellipse at 30% 0%, rgba(129,140,248,0.26) 0%, transparent 65%)",
+    topLine: "linear-gradient(90deg, #c7d2fe, #818cf8, #4f46e5, transparent)",
+    glowRing: "rgba(129,140,248,0.45)",
+    iconBg: "bg-indigo-400/25",
+    iconColor: "text-indigo-200",
+    numColor: "rgba(199,210,254,0.12)",
+    tagColor: "text-indigo-300",
+    hoverGlow: "rgba(79,70,229,0.22)",
+    border: "rgba(129,140,248,0.18)",
   },
 ];
 
@@ -458,20 +470,25 @@ export default function HomePage() {
               style={{ perspective: "1000px" }}
             >
               <div
-                className="relative overflow-hidden rounded-2xl transition-all duration-400 hover:-translate-y-2"
+                className="relative overflow-hidden rounded-2xl transition-all duration-400 hover:-translate-y-2 hover:scale-[1.02]"
                 style={{
                   background: feat.cardBg,
-                  boxShadow: `0 1px 0 0 rgba(255,255,255,0.06) inset, 0 4px 24px rgba(0,0,0,0.45)`,
-                  border: "1px solid rgba(255,255,255,0.07)",
+                  boxShadow: `0 1px 0 0 rgba(255,255,255,0.10) inset, 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${feat.border}`,
                 }}
               >
                 {/* Colored top line */}
                 <div
-                  className="absolute top-0 inset-x-0 h-[2px]"
+                  className="absolute top-0 inset-x-0 h-[2.5px]"
                   style={{ background: feat.topLine }}
                 />
 
-                {/* Glow on hover (pseudo-overlay) */}
+                {/* Ambient inner glow */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: feat.innerGlow }}
+                />
+
+                {/* Hover boost glow */}
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
                   style={{ background: `radial-gradient(ellipse at 50% 0%, ${feat.hoverGlow} 0%, transparent 70%)` }}
@@ -498,10 +515,10 @@ export default function HomePage() {
 
                   {/* Text */}
                   <div className="space-y-2">
-                    <h3 className="font-display font-[700] text-[15px] tracking-tight text-white/90">
+                    <h3 className="font-display font-[700] text-[15px] tracking-tight text-white">
                       {feat.label}
                     </h3>
-                    <p className="text-[12.5px] leading-relaxed font-body font-[300] italic text-white/45">
+                    <p className="text-[12.5px] leading-relaxed font-body font-[300] italic text-white/60">
                       {feat.desc}
                     </p>
                   </div>

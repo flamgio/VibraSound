@@ -80,35 +80,6 @@ export function AnimatedBackground() {
       }
     };
 
-    const drawWaves = () => {
-      const dark = isDark();
-      const waves = [
-        { amp: 28, freq: 0.007, speed: 0.5, phase: 0, y: H * 0.4, hue: 258, alpha: dark ? 0.12 : 0.07 },
-        { amp: 18, freq: 0.011, speed: -0.35, phase: 1.8, y: H * 0.48, hue: 196, alpha: dark ? 0.09 : 0.055 },
-        { amp: 34, freq: 0.004, speed: 0.22, phase: 0.9, y: H * 0.55, hue: 280, alpha: dark ? 0.10 : 0.06 },
-        { amp: 12, freq: 0.016, speed: -0.6, phase: 2.5, y: H * 0.62, hue: 216, alpha: dark ? 0.07 : 0.04 },
-      ];
-
-      for (const w of waves) {
-        w.phase += w.speed * 0.016;
-        ctx.beginPath();
-        for (let x = 0; x <= W; x += 2) {
-          const y = w.y
-            + Math.sin(x * w.freq + w.phase) * w.amp
-            + Math.sin(x * w.freq * 2.1 + w.phase * 1.3) * w.amp * 0.32
-            + Math.sin(x * w.freq * 0.4 + w.phase * 0.5) * w.amp * 0.55;
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        const grad = ctx.createLinearGradient(0, 0, W, 0);
-        grad.addColorStop(0, `hsla(${w.hue}, 85%, ${dark ? 72 : 52}%, 0)`);
-        grad.addColorStop(0.15, `hsla(${w.hue}, 85%, ${dark ? 72 : 52}%, ${w.alpha})`);
-        grad.addColorStop(0.85, `hsla(${w.hue}, 85%, ${dark ? 72 : 52}%, ${w.alpha})`);
-        grad.addColorStop(1, `hsla(${w.hue}, 85%, ${dark ? 72 : 52}%, 0)`);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = dark ? 1.4 : 1.0;
-        ctx.stroke();
-      }
-    };
 
     const spawnParticle = () => {
       if (particles.length > 50) return;
