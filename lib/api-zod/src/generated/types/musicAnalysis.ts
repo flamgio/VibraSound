@@ -7,6 +7,7 @@
  */
 import type { CellularResonance } from "./cellularResonance";
 import type { FrequencyBand } from "./frequencyBand";
+import type { MoodGenre } from "./moodGenre";
 import type { TempoChange } from "./tempoChange";
 
 export interface MusicAnalysis {
@@ -28,5 +29,6 @@ export interface MusicAnalysis {
   beatPattern: number[];
   tempoChanges: TempoChange[];
   cellularResonance: CellularResonance;
+  moodGenre?: MoodGenre;
   createdAt: Date;
 }

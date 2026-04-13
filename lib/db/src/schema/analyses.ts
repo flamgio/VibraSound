@@ -15,6 +15,7 @@ export const analysesTable = pgTable("analyses", {
   beatPattern: jsonb("beat_pattern").notNull().$type<number[]>(),
   tempoChanges: jsonb("tempo_changes").notNull().$type<TempoChange[]>(),
   cellularResonance: jsonb("cellular_resonance").notNull().$type<CellularResonance>(),
+  moodGenre: jsonb("mood_genre").$type<MoodGenre>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -42,6 +43,24 @@ export interface CellularResonance {
   healingFrequencies: HealingFrequency[];
   assessment: string;
   category: "highly_beneficial" | "beneficial" | "neutral" | "potentially_harmful";
+}
+
+export interface MoodGenre {
+  mood: string;
+  moodEmoji: string;
+  moodConfidence: number;
+  moodDescription: string;
+  genre: string;
+  subGenre: string;
+  genreConfidence: number;
+  characteristics: string[];
+  moodDimensions: {
+    energy: number;
+    aggression: number;
+    euphoria: number;
+    tension: number;
+    calmness: number;
+  };
 }
 
 export const insertAnalysisSchema = createInsertSchema(analysesTable).omit({ id: true, createdAt: true });

@@ -76,6 +76,39 @@ export interface CellularResonance {
   category: CellularResonanceCategory;
 }
 
+export interface MoodDimensions {
+  /** Energy dimension 0-1 */
+  energy: number;
+  /** Aggression dimension 0-1 */
+  aggression: number;
+  /** Euphoria dimension 0-1 */
+  euphoria: number;
+  /** Tension dimension 0-1 */
+  tension: number;
+  /** Calmness dimension 0-1 */
+  calmness: number;
+}
+
+export interface MoodGenre {
+  /** Primary detected mood (e.g. Energetic, Calm, Aggressive, Euphoric) */
+  mood: string;
+  /** Emoji representing the mood */
+  moodEmoji: string;
+  /** Mood detection confidence 0-1 */
+  moodConfidence: number;
+  /** Human-readable description of the detected mood */
+  moodDescription: string;
+  /** Suggested primary genre (e.g. EDM, Jazz, Lo-Fi) */
+  genre: string;
+  /** Suggested sub-genre */
+  subGenre: string;
+  /** Genre detection confidence 0-1 */
+  genreConfidence: number;
+  /** Key sonic characteristics of the track */
+  characteristics: string[];
+  moodDimensions: MoodDimensions;
+}
+
 export interface MusicAnalysis {
   id: number;
   url: string;
@@ -95,6 +128,7 @@ export interface MusicAnalysis {
   beatPattern: number[];
   tempoChanges: TempoChange[];
   cellularResonance: CellularResonance;
+  moodGenre?: MoodGenre;
   createdAt: string;
 }
 

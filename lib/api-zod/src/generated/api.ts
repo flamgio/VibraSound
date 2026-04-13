@@ -77,6 +77,35 @@ export const AnalyzeMusicResponse = zod.object({
       "potentially_harmful",
     ]),
   }),
+  moodGenre: zod
+    .object({
+      mood: zod
+        .string()
+        .describe(
+          "Primary detected mood (e.g. Energetic, Calm, Aggressive, Euphoric)",
+        ),
+      moodEmoji: zod.string().describe("Emoji representing the mood"),
+      moodConfidence: zod.number().describe("Mood detection confidence 0-1"),
+      moodDescription: zod
+        .string()
+        .describe("Human-readable description of the detected mood"),
+      genre: zod
+        .string()
+        .describe("Suggested primary genre (e.g. EDM, Jazz, Lo-Fi)"),
+      subGenre: zod.string().describe("Suggested sub-genre"),
+      genreConfidence: zod.number().describe("Genre detection confidence 0-1"),
+      characteristics: zod
+        .array(zod.string())
+        .describe("Key sonic characteristics of the track"),
+      moodDimensions: zod.object({
+        energy: zod.number().describe("Energy dimension 0-1"),
+        aggression: zod.number().describe("Aggression dimension 0-1"),
+        euphoria: zod.number().describe("Euphoria dimension 0-1"),
+        tension: zod.number().describe("Tension dimension 0-1"),
+        calmness: zod.number().describe("Calmness dimension 0-1"),
+      }),
+    })
+    .optional(),
   createdAt: zod.coerce.date(),
 });
 
@@ -159,6 +188,39 @@ export const AnalyzePlaylistResponse = zod.object({
               "potentially_harmful",
             ]),
           }),
+          moodGenre: zod
+            .object({
+              mood: zod
+                .string()
+                .describe(
+                  "Primary detected mood (e.g. Energetic, Calm, Aggressive, Euphoric)",
+                ),
+              moodEmoji: zod.string().describe("Emoji representing the mood"),
+              moodConfidence: zod
+                .number()
+                .describe("Mood detection confidence 0-1"),
+              moodDescription: zod
+                .string()
+                .describe("Human-readable description of the detected mood"),
+              genre: zod
+                .string()
+                .describe("Suggested primary genre (e.g. EDM, Jazz, Lo-Fi)"),
+              subGenre: zod.string().describe("Suggested sub-genre"),
+              genreConfidence: zod
+                .number()
+                .describe("Genre detection confidence 0-1"),
+              characteristics: zod
+                .array(zod.string())
+                .describe("Key sonic characteristics of the track"),
+              moodDimensions: zod.object({
+                energy: zod.number().describe("Energy dimension 0-1"),
+                aggression: zod.number().describe("Aggression dimension 0-1"),
+                euphoria: zod.number().describe("Euphoria dimension 0-1"),
+                tension: zod.number().describe("Tension dimension 0-1"),
+                calmness: zod.number().describe("Calmness dimension 0-1"),
+              }),
+            })
+            .optional(),
           createdAt: zod.coerce.date(),
         })
         .optional(),
@@ -259,6 +321,35 @@ export const GetAnalysisResponse = zod.object({
       "potentially_harmful",
     ]),
   }),
+  moodGenre: zod
+    .object({
+      mood: zod
+        .string()
+        .describe(
+          "Primary detected mood (e.g. Energetic, Calm, Aggressive, Euphoric)",
+        ),
+      moodEmoji: zod.string().describe("Emoji representing the mood"),
+      moodConfidence: zod.number().describe("Mood detection confidence 0-1"),
+      moodDescription: zod
+        .string()
+        .describe("Human-readable description of the detected mood"),
+      genre: zod
+        .string()
+        .describe("Suggested primary genre (e.g. EDM, Jazz, Lo-Fi)"),
+      subGenre: zod.string().describe("Suggested sub-genre"),
+      genreConfidence: zod.number().describe("Genre detection confidence 0-1"),
+      characteristics: zod
+        .array(zod.string())
+        .describe("Key sonic characteristics of the track"),
+      moodDimensions: zod.object({
+        energy: zod.number().describe("Energy dimension 0-1"),
+        aggression: zod.number().describe("Aggression dimension 0-1"),
+        euphoria: zod.number().describe("Euphoria dimension 0-1"),
+        tension: zod.number().describe("Tension dimension 0-1"),
+        calmness: zod.number().describe("Calmness dimension 0-1"),
+      }),
+    })
+    .optional(),
   createdAt: zod.coerce.date(),
 });
 

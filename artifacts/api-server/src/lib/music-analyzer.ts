@@ -1,4 +1,4 @@
-import type { FrequencyBand, TempoChange, HealingFrequency, CellularResonance } from "@workspace/db";
+import type { FrequencyBand, TempoChange, HealingFrequency, CellularResonance, MoodGenre } from "@workspace/db";
 
 const HEALING_FREQUENCIES = [
   { frequency: 174, name: "Pain Relief (174 Hz)", benefit: "Reduces pain and stress, provides a sense of security" },
@@ -90,6 +90,226 @@ async function fetchVideoTitle(url: string): Promise<string> {
     return decodeURIComponent(pathParts[pathParts.length - 1]).replace(/[-_]/g, " ");
   }
   return "Unknown Track";
+}
+
+// ─── Mood & Genre Classifier ─────────────────────────────────────────────────
+function classifyMoodAndGenre(
+  bpm: number,
+  key: string,
+  energy: number,
+  danceability: number,
+  frequencySpectrum: FrequencyBand[],
+  dominantFrequency: number,
+): MoodGenre {
+  const isMinor = key.toLowerCase().includes("minor");
+
+  // ── Spectral features ────────────────────────────────────────────────────
+  const subBass = frequencySpectrum.find(b => b.label === "Sub Bass")?.amplitude ?? 0;
+  const bass = frequencySpectrum.find(b => b.label === "Bass")?.amplitude ?? 0;
+  const lowMid = frequencySpectrum.find(b => b.label === "Low Mid")?.amplitude ?? 0;
+  const mid = frequencySpectrum.find(b => b.label === "Mid")?.amplitude ?? 0;
+  const upperMid = frequencySpectrum.find(b => b.label === "Upper Mid")?.amplitude ?? 0;
+  const presence = frequencySpectrum.find(b => b.label === "Presence")?.amplitude ?? 0;
+  const brilliance = frequencySpectrum.find(b => b.label === "Brilliance")?.amplitude ?? 0;
+
+  const bassWeight = (subBass + bass) / 2;
+  const midWeight = (lowMid + mid) / 2;
+  const highWeight = (upperMid + presence + brilliance) / 3;
+  const spectralBrightness = (highWeight * 2 + midWeight) / 3;
+  const spectralDarkness = (bassWeight * 2 + midWeight) / 3;
+
+  // ── Mood dimensions (0–1 each) ───────────────────────────────────────────
+  const dimEnergy = Math.min(1, (energy * 0.5 + (bpm / 200) * 0.35 + spectralBrightness * 0.15));
+  const dimAggression = Math.min(1, (bassWeight * 0.4 + (bpm > 140 ? 0.4 : bpm / 350) + (isMinor ? 0.15 : 0) + (energy > 0.7 ? 0.05 : 0)));
+  const dimEuphoria = Math.min(1, (danceability * 0.4 + spectralBrightness * 0.3 + (!isMinor ? 0.2 : 0) + (bpm >= 120 && bpm <= 145 ? 0.1 : 0)));
+  const dimTension = Math.min(1, (isMinor ? 0.25 : 0) + spectralDarkness * 0.35 + (energy > 0.6 && danceability < 0.5 ? 0.25 : 0) + (bpm > 160 ? 0.15 : 0));
+  const dimCalmness = Math.min(1, Math.max(0, 1 - dimEnergy * 0.6 - dimAggression * 0.3 - (danceability * 0.1)));
+
+  const moodDimensions = {
+    energy: Math.round(dimEnergy * 100) / 100,
+    aggression: Math.round(dimAggression * 100) / 100,
+    euphoria: Math.round(dimEuphoria * 100) / 100,
+    tension: Math.round(dimTension * 100) / 100,
+    calmness: Math.round(dimCalmness * 100) / 100,
+  };
+
+  // ── Mood label (primary emotion) ─────────────────────────────────────────
+  type MoodEntry = {
+    mood: string;
+    emoji: string;
+    description: string;
+    score: number;
+  };
+
+  const moodCandidates: MoodEntry[] = [
+    {
+      mood: "Aggressive",
+      emoji: "🔥",
+      description: "Raw, intense energy with heavy lows and driving rhythm — built for power and impact",
+      score: dimAggression * 1.2 + dimEnergy * 0.6 - dimCalmness * 0.8,
+    },
+    {
+      mood: "Euphoric",
+      emoji: "✨",
+      description: "Sky-high brightness with infectious dance energy — made to lift you off the ground",
+      score: dimEuphoria * 1.2 + dimEnergy * 0.5 - dimAggression * 0.4,
+    },
+    {
+      mood: "Energetic",
+      emoji: "⚡",
+      description: "High-octane momentum and forward drive — electrifying and propulsive",
+      score: dimEnergy * 1.1 + danceability * 0.4 - dimCalmness * 0.5,
+    },
+    {
+      mood: "Tense",
+      emoji: "😤",
+      description: "A brooding, dark atmosphere with underlying pressure — emotionally complex",
+      score: dimTension * 1.3 + (isMinor ? 0.3 : 0) - dimEuphoria * 0.5,
+    },
+    {
+      mood: "Groovy",
+      emoji: "🎷",
+      description: "Smooth rhythmic flow with a danceable pocket — warm, soulful and inviting",
+      score: danceability * 0.8 + midWeight * 0.5 + (bpm >= 85 && bpm <= 115 ? 0.4 : 0) - dimAggression * 0.4,
+    },
+    {
+      mood: "Melancholic",
+      emoji: "🌧️",
+      description: "Bittersweet and introspective — minor harmonics and restrained energy evoke deep feeling",
+      score: (isMinor ? 0.6 : 0) + dimTension * 0.4 + (energy < 0.5 ? 0.3 : 0) - dimEuphoria * 0.5,
+    },
+    {
+      mood: "Calm",
+      emoji: "🌊",
+      description: "Serene and unrushed — gentle frequencies and measured tempo create a meditative space",
+      score: dimCalmness * 1.2 + (bpm < 85 ? 0.3 : 0) + (energy < 0.45 ? 0.25 : 0) - dimAggression * 0.4,
+    },
+    {
+      mood: "Dreamy",
+      emoji: "🌙",
+      description: "Hazy, atmospheric and drifting — like a lucid dream rendered in sound",
+      score: (bpm < 95 ? 0.4 : 0) + highWeight * 0.4 + (dominantFrequency > 2000 ? 0.2 : 0) + (energy < 0.55 ? 0.2 : 0),
+    },
+  ];
+
+  moodCandidates.sort((a, b) => b.score - a.score);
+  const topMood = moodCandidates[0];
+  const moodConfidence = Math.min(0.99, Math.max(0.5, 0.6 + (topMood.score - moodCandidates[1].score) * 0.5));
+
+  // ── Genre classification ──────────────────────────────────────────────────
+  type GenreEntry = {
+    genre: string;
+    subGenre: string;
+    score: number;
+  };
+
+  const genreCandidates: GenreEntry[] = [
+    {
+      genre: "Ambient",
+      subGenre: "Atmospheric / Drone",
+      score: (bpm < 80 ? 0.5 : 0) + (energy < 0.35 ? 0.4 : 0) + highWeight * 0.2 + (dimCalmness > 0.6 ? 0.2 : 0),
+    },
+    {
+      genre: "Lo-Fi",
+      subGenre: "Chill Hop / Study Beats",
+      score: (bpm >= 65 && bpm <= 90 ? 0.4 : 0) + (energy < 0.5 ? 0.3 : 0) + midWeight * 0.2 + (!isMinor ? 0 : 0.1),
+    },
+    {
+      genre: "Jazz",
+      subGenre: bpm < 100 ? "Cool Jazz" : "Bebop / Fusion",
+      score: (bpm >= 80 && bpm <= 140 ? 0.3 : 0) + midWeight * 0.35 + (energy < 0.65 ? 0.2 : 0) + lowMid * 0.15,
+    },
+    {
+      genre: "R&B / Soul",
+      subGenre: danceability > 0.6 ? "Contemporary R&B" : "Neo-Soul",
+      score: (bpm >= 70 && bpm <= 105 ? 0.35 : 0) + (danceability > 0.5 ? 0.25 : 0) + bassWeight * 0.25 + (energy >= 0.3 && energy <= 0.7 ? 0.15 : 0),
+    },
+    {
+      genre: "Hip-Hop",
+      subGenre: bpm > 120 ? "Trap" : "Boom Bap",
+      score: (bpm >= 75 && bpm <= 130 ? 0.3 : 0) + bassWeight * 0.4 + (energy >= 0.45 && energy <= 0.8 ? 0.2 : 0) + (danceability > 0.5 ? 0.1 : 0),
+    },
+    {
+      genre: "Pop",
+      subGenre: danceability > 0.7 ? "Dance-Pop" : "Indie Pop",
+      score: (bpm >= 100 && bpm <= 135 ? 0.3 : 0) + (danceability > 0.6 ? 0.3 : 0) + (!isMinor ? 0.2 : 0) + spectralBrightness * 0.2,
+    },
+    {
+      genre: "House",
+      subGenre: bpm >= 128 ? "Deep House" : "Tech House",
+      score: (bpm >= 120 && bpm <= 135 ? 0.55 : 0) + bassWeight * 0.3 + (danceability > 0.65 ? 0.15 : 0),
+    },
+    {
+      genre: "EDM",
+      subGenre: bpm >= 140 ? "Big Room / Festival" : "Progressive",
+      score: (bpm >= 126 && bpm <= 150 ? 0.35 : 0) + (dimEuphoria > 0.5 ? 0.3 : 0) + spectralBrightness * 0.2 + (danceability > 0.7 ? 0.15 : 0),
+    },
+    {
+      genre: "Drum & Bass",
+      subGenre: energy > 0.7 ? "Neurofunk" : "Liquid DnB",
+      score: (bpm >= 160 && bpm <= 185 ? 0.65 : 0) + bassWeight * 0.2 + (energy > 0.6 ? 0.15 : 0),
+    },
+    {
+      genre: "Techno",
+      subGenre: dimAggression > 0.5 ? "Industrial Techno" : "Minimal Techno",
+      score: (bpm >= 135 && bpm <= 160 ? 0.4 : 0) + bassWeight * 0.3 + (energy > 0.65 ? 0.2 : 0) + (dimAggression > 0.4 ? 0.1 : 0),
+    },
+    {
+      genre: "Rock",
+      subGenre: dimAggression > 0.55 ? "Hard Rock" : "Alternative",
+      score: (bpm >= 110 && bpm <= 160 ? 0.25 : 0) + (dimAggression > 0.45 ? 0.3 : 0) + midWeight * 0.2 + (isMinor ? 0.15 : 0) + upperMid * 0.1,
+    },
+    {
+      genre: "Classical / Cinematic",
+      subGenre: isMinor ? "Dark Orchestral" : "Neo-Classical",
+      score: (bpm < 90 ? 0.25 : 0) + (energy < 0.5 ? 0.2 : 0) + midWeight * 0.25 + (danceability < 0.4 ? 0.2 : 0) + (dominantFrequency < 800 ? 0.1 : 0),
+    },
+  ];
+
+  genreCandidates.sort((a, b) => b.score - a.score);
+  const topGenre = genreCandidates[0];
+  const genreConfidence = Math.min(0.99, Math.max(0.45, 0.55 + (topGenre.score - genreCandidates[1].score) * 0.4));
+
+  // ── Characteristics ───────────────────────────────────────────────────────
+  const chars: string[] = [];
+
+  if (bpm < 70) chars.push("Very slow tempo");
+  else if (bpm < 90) chars.push("Slow, relaxed tempo");
+  else if (bpm < 110) chars.push("Moderate groove tempo");
+  else if (bpm < 130) chars.push("Upbeat, driving tempo");
+  else if (bpm < 155) chars.push("Fast, energetic tempo");
+  else chars.push("Extremely fast tempo");
+
+  if (bassWeight > 0.65) chars.push("Heavy low-end bass");
+  else if (bassWeight > 0.45) chars.push("Prominent bass presence");
+
+  if (spectralBrightness > 0.65) chars.push("Bright, airy high frequencies");
+  else if (spectralBrightness > 0.45) chars.push("Balanced spectral brightness");
+
+  if (isMinor) chars.push("Minor key — darker harmonic palette");
+  else chars.push("Major key — bright harmonic palette");
+
+  if (danceability > 0.75) chars.push("Highly danceable rhythm");
+  else if (danceability > 0.55) chars.push("Moderate dance groove");
+  else if (danceability < 0.35) chars.push("Non-dance, contemplative structure");
+
+  if (energy > 0.80) chars.push("Intense, high-energy dynamics");
+  else if (energy > 0.60) chars.push("Elevated energy dynamics");
+  else if (energy < 0.30) chars.push("Low-energy, intimate dynamics");
+
+  if (dominantFrequency >= 432 && dominantFrequency <= 528) chars.push("Resonant healing frequency range");
+
+  return {
+    mood: topMood.mood,
+    moodEmoji: topMood.emoji,
+    moodConfidence: Math.round(moodConfidence * 100) / 100,
+    moodDescription: topMood.description,
+    genre: topGenre.genre,
+    subGenre: topGenre.subGenre,
+    genreConfidence: Math.round(genreConfidence * 100) / 100,
+    characteristics: chars.slice(0, 5),
+    moodDimensions,
+  };
 }
 
 export async function analyzeMusic(url: string) {
@@ -194,6 +414,8 @@ export async function analyzeMusic(url: string) {
     category,
   };
 
+  const moodGenre = classifyMoodAndGenre(bpm, key, energy, danceability, frequencySpectrum, dominantFrequency);
+
   return {
     url: normalizedUrl,
     title,
@@ -206,5 +428,6 @@ export async function analyzeMusic(url: string) {
     beatPattern,
     tempoChanges,
     cellularResonance,
+    moodGenre,
   };
 }

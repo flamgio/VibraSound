@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, BarChart, Bar, Cell, RadialBarChart, RadialBar
+  ResponsiveContainer, BarChart, Bar, Cell, RadialBarChart, RadialBar,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from "recharts";
 import {
   BpmIcon, MusicNoteIcon, EnergyIcon, CellIcon, DnaIcon, FrequencyIcon,
@@ -55,8 +56,18 @@ async function downloadShareCard(analysis: {
   energy: number; danceability: number;
   cellularResonance: { score: number; category: string };
   dominantFrequency: number;
+  moodGenre?: { mood: string; genre: string; moodEmoji: string } | null;
 }) {
-  const { genre, mood, moodColor } = getMoodAndGenre(analysis.bpm, analysis.energy, analysis.danceability);
+  const mg = analysis.moodGenre;
+  const { genre: fallbackGenre, mood: fallbackMood, moodColor: fallbackMoodColor } = getMoodAndGenre(analysis.bpm, analysis.energy, analysis.danceability);
+  const mood = mg?.mood ?? fallbackMood;
+  const genre = mg?.genre ?? fallbackGenre;
+  const moodColorMap: Record<string, string> = {
+    Aggressive: "#fb923c", Euphoric: "#f472b6", Energetic: "#38bdf8",
+    Tense: "#818cf8", Groovy: "#a78bfa", Melancholic: "#6366f1",
+    Calm: "#67e8f9", Dreamy: "#c4b5fd",
+  };
+  const moodColor = moodColorMap[mood] ?? fallbackMoodColor;
   const W = 1200, H = 630;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
@@ -460,49 +471,214 @@ export default function AnalysisDetail() {
         ))}
       </div>
 
-      {/* Mood & Genre Card */}
+      {/* Mood & Genre Card — rich version */}
       {(() => {
-        const { genre, mood, moodColor } = getMoodAndGenre(analysis.bpm, analysis.energy, analysis.danceability);
-        const moodBgs: Record<string, string> = {
-          Euphoric: "from-pink-900/40 to-pink-950/20",
-          Intense: "from-orange-900/40 to-orange-950/20",
-          Groovy: "from-violet-900/40 to-violet-950/20",
-          Energetic: "from-sky-900/40 to-sky-950/20",
-          Chill: "from-emerald-900/40 to-emerald-950/20",
-          Melancholic: "from-indigo-900/40 to-indigo-950/20",
-          Calm: "from-cyan-900/40 to-cyan-950/20",
-          Relaxed: "from-teal-900/40 to-teal-950/20",
+        // Prefer server-computed moodGenre; fall back to frontend classifier
+        const mg = analysis.moodGenre ?? (() => {
+          const { genre, mood } = getMoodAndGenre(analysis.bpm, analysis.energy, analysis.danceability);
+          return {
+            mood, moodEmoji: "🎵", moodConfidence: 0.7, moodDescription: "",
+            genre, subGenre: genre, genreConfidence: 0.7,
+            characteristics: [] as string[],
+            moodDimensions: {
+              energy: analysis.energy,
+              aggression: 0.3,
+              euphoria: analysis.danceability,
+              tension: 0.3,
+              calmness: 1 - analysis.energy,
+            },
+          };
+        })();
+
+        const moodColorMap: Record<string, string> = {
+          Aggressive: "#fb923c",
+          Euphoric: "#f472b6",
+          Energetic: "#38bdf8",
+          Tense: "#818cf8",
+          Groovy: "#a78bfa",
+          Melancholic: "#6366f1",
+          Calm: "#67e8f9",
+          Dreamy: "#c4b5fd",
         };
+        const moodColor = moodColorMap[mg.mood] ?? "#a78bfa";
+
+        const moodBgMap: Record<string, string> = {
+          Aggressive: "from-orange-950/50 via-orange-950/20 to-transparent",
+          Euphoric: "from-pink-950/50 via-pink-950/20 to-transparent",
+          Energetic: "from-sky-950/50 via-sky-950/20 to-transparent",
+          Tense: "from-indigo-950/50 via-indigo-950/20 to-transparent",
+          Groovy: "from-violet-950/50 via-violet-950/20 to-transparent",
+          Melancholic: "from-indigo-950/60 via-indigo-950/25 to-transparent",
+          Calm: "from-cyan-950/50 via-cyan-950/20 to-transparent",
+          Dreamy: "from-purple-950/50 via-purple-950/20 to-transparent",
+        };
+        const moodBg = moodBgMap[mg.mood] ?? "from-violet-950/50 via-violet-950/20 to-transparent";
+
+        const radarData = [
+          { dim: "Energy", value: Math.round(mg.moodDimensions.energy * 100) },
+          { dim: "Aggression", value: Math.round(mg.moodDimensions.aggression * 100) },
+          { dim: "Euphoria", value: Math.round(mg.moodDimensions.euphoria * 100) },
+          { dim: "Tension", value: Math.round(mg.moodDimensions.tension * 100) },
+          { dim: "Calmness", value: Math.round(mg.moodDimensions.calmness * 100) },
+        ];
+
         return (
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${moodBgs[mood] ?? "from-violet-900/40 to-violet-950/20"} ring-1 ring-white/8`}>
-              <div className="absolute top-0 inset-x-0 h-[2px] rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${moodColor}, transparent)` }} />
-              <div className="flex flex-wrap items-center justify-between gap-5">
-                <div className="space-y-1">
-                  <p className="text-wide-display text-white/40">Mood & Genre Analysis</p>
-                  <div className="flex items-center gap-3 flex-wrap mt-2">
-                    <span className="font-display text-[2rem] font-[800] tracking-tight" style={{ color: moodColor }}>
-                      {mood}
-                    </span>
-                    <span className="text-white/30 text-[1.5rem] font-light">·</span>
-                    <span className="font-body text-[1.1rem] font-[500] text-white/70 italic">{genre}</span>
+            <div className="vb-card overflow-hidden">
+              {/* Top accent bar */}
+              <div className="absolute top-0 inset-x-0 h-[2px] rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${moodColor}, transparent 70%)` }} />
+
+              <div className="relative z-10 p-5">
+                {/* Header */}
+                <div className="flex items-center gap-2.5 mb-5">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center ring-1 ring-white/10" style={{ backgroundColor: `${moodColor}18` }}>
+                    <span className="text-[18px] leading-none">{mg.moodEmoji}</span>
+                  </div>
+                  <div>
+                    <p className="font-display font-700 text-[13.5px] tracking-tight">Mood & Genre Classifier</p>
+                    <p className="text-[11.5px] text-muted-foreground font-body">AI-derived from BPM, key, spectral data &amp; energy profile</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  {[
-                    { key: "Energy", val: `${(analysis.energy * 100).toFixed(0)}%`, color: "#f59e0b" },
-                    { key: "Dance", val: `${(analysis.danceability * 100).toFixed(0)}%`, color: "#34d399" },
-                    { key: "BPM", val: Math.round(analysis.bpm).toString(), color: moodColor },
-                  ].map(m => (
-                    <div key={m.key} className="text-center px-4 py-3 rounded-xl bg-white/5 ring-1 ring-white/8 min-w-[72px]">
-                      <p className="text-big-num text-[22px]" style={{ color: m.color }}>{m.val}</p>
-                      <p className="label-xs mt-1">{m.key}</p>
+
+                <div className="grid gap-5 lg:grid-cols-[1fr_220px]">
+                  {/* Left: Mood + Genre details */}
+                  <div className="space-y-5">
+                    {/* Mood row */}
+                    <div className={`relative overflow-hidden rounded-xl p-4 bg-gradient-to-r ${moodBg} ring-1 ring-white/8`}>
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[10.5px] font-semibold tracking-widest text-white/35 uppercase mb-1.5 font-body">Detected Mood</p>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="font-display text-[2.2rem] font-[800] tracking-tight leading-none" style={{ color: moodColor }}>
+                              {mg.moodEmoji} {mg.mood}
+                            </span>
+                          </div>
+                          {mg.moodDescription && (
+                            <p className="text-[12px] text-white/55 mt-2 max-w-xs leading-relaxed font-body">{mg.moodDescription}</p>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[10.5px] tracking-widest text-white/35 uppercase mb-1.5 font-body">Confidence</p>
+                          <p className="font-mono-custom text-[1.5rem] font-[700]" style={{ color: moodColor }}>
+                            {(mg.moodConfidence * 100).toFixed(0)}%
+                          </p>
+                          <div className="mt-1.5 w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                            <motion.div
+                              className="h-full rounded-full"
+                              style={{ background: moodColor }}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${mg.moodConfidence * 100}%` }}
+                              transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  ))}
+
+                    {/* Genre row */}
+                    <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-white/4 ring-1 ring-white/8">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10.5px] font-semibold tracking-widest text-white/35 uppercase mb-1.5 font-body">Suggested Genre</p>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="font-display text-[1.4rem] font-[700] tracking-tight text-white">
+                            {mg.genre}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold font-body bg-white/8 text-white/60 ring-1 ring-white/12">
+                            {mg.subGenre}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[10.5px] tracking-widest text-white/35 uppercase mb-1.5 font-body">Match</p>
+                        <p className="font-mono-custom text-[1.3rem] font-[700] text-sky-400">
+                          {(mg.genreConfidence * 100).toFixed(0)}%
+                        </p>
+                        <div className="mt-1.5 w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                          <motion.div
+                            className="h-full rounded-full bg-sky-400"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${mg.genreConfidence * 100}%` }}
+                            transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Characteristics */}
+                    {mg.characteristics.length > 0 && (
+                      <div>
+                        <p className="text-[10.5px] font-semibold tracking-widest text-white/35 uppercase mb-2.5 font-body">Sonic Characteristics</p>
+                        <div className="flex flex-wrap gap-2">
+                          {mg.characteristics.map((c, i) => (
+                            <motion.span
+                              key={i}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.55 + i * 0.05 }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-body font-medium bg-white/6 text-white/70 ring-1 ring-white/10"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: moodColor }} />
+                              {c}
+                            </motion.span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Radar chart — Mood Dimensions */}
+                  <div className="flex flex-col items-center gap-3">
+                    <p className="text-[10.5px] font-semibold tracking-widest text-white/35 uppercase font-body self-start lg:self-center">Mood Dimensions</p>
+                    <div className="w-full flex justify-center">
+                      <ResponsiveContainer width={200} height={200}>
+                        <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
+                          <PolarGrid
+                            stroke="rgba(255,255,255,0.08)"
+                            strokeDasharray="3 3"
+                          />
+                          <PolarAngleAxis
+                            dataKey="dim"
+                            tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 10, fontFamily: "JetBrains Mono" }}
+                          />
+                          <PolarRadiusAxis
+                            domain={[0, 100]}
+                            tick={false}
+                            axisLine={false}
+                          />
+                          <Radar
+                            dataKey="value"
+                            stroke={moodColor}
+                            fill={moodColor}
+                            fillOpacity={0.15}
+                            strokeWidth={2}
+                            dot={{ fill: moodColor, r: 3, strokeWidth: 0 }}
+                          />
+                        </RadarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    {/* Dimension mini-bars */}
+                    <div className="w-full space-y-2">
+                      {radarData.map((d, i) => (
+                        <div key={d.dim} className="flex items-center gap-2">
+                          <span className="w-[62px] text-[10px] text-white/40 font-body shrink-0">{d.dim}</span>
+                          <div className="flex-1 h-1 rounded-full bg-white/8 overflow-hidden">
+                            <motion.div
+                              className="h-full rounded-full"
+                              style={{ background: moodColor }}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${d.value}%` }}
+                              transition={{ duration: 0.9, delay: 0.5 + i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                            />
+                          </div>
+                          <span className="w-7 text-right text-[10px] font-mono-custom text-white/50">{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

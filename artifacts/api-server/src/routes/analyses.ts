@@ -37,6 +37,7 @@ router.post("/analyze", async (req: Request, res: Response) => {
       beatPattern: analysisResult.beatPattern,
       tempoChanges: analysisResult.tempoChanges,
       cellularResonance: analysisResult.cellularResonance,
+      moodGenre: analysisResult.moodGenre,
     }).returning();
 
     res.json({
@@ -52,6 +53,7 @@ router.post("/analyze", async (req: Request, res: Response) => {
       beatPattern: inserted.beatPattern,
       tempoChanges: inserted.tempoChanges,
       cellularResonance: inserted.cellularResonance,
+      moodGenre: inserted.moodGenre,
       createdAt: inserted.createdAt.toISOString(),
     });
   } catch (error: unknown) {
@@ -87,6 +89,7 @@ router.post("/analyze-playlist", async (req: Request, res: Response) => {
         beatPattern: result.beatPattern,
         tempoChanges: result.tempoChanges,
         cellularResonance: result.cellularResonance,
+        moodGenre: result.moodGenre,
       }).returning();
       return {
         id: inserted.id,
@@ -101,6 +104,7 @@ router.post("/analyze-playlist", async (req: Request, res: Response) => {
         beatPattern: inserted.beatPattern,
         tempoChanges: inserted.tempoChanges,
         cellularResonance: inserted.cellularResonance,
+        moodGenre: inserted.moodGenre,
         createdAt: inserted.createdAt.toISOString(),
       };
     }));
@@ -358,6 +362,7 @@ router.get("/analyses/:id", async (req: Request, res: Response) => {
       beatPattern: result.beatPattern,
       tempoChanges: result.tempoChanges,
       cellularResonance: result.cellularResonance,
+      moodGenre: result.moodGenre,
       createdAt: result.createdAt.toISOString(),
     });
   } catch (error) {

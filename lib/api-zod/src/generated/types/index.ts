@@ -19,6 +19,8 @@ export * from "./getRecentAnalysesParams";
 export * from "./healingFrequency";
 export * from "./healthStatus";
 export * from "./lyricsResult";
+export * from "./moodDimensions";
+export * from "./moodGenre";
 export * from "./musicAnalysis";
 export * from "./musicAnalysisSummary";
 export * from "./musicAnalysisSummaryCategory";

@@ -26,6 +26,7 @@ A professional music analysis web application targeting music producers, video e
 
 ### Features
 - **Single Track Analysis**: Paste any YouTube/SoundCloud URL → BPM, musical key, energy, danceability, frequency spectrum, cellular resonance score (0-100)
+- **Mood & Genre Classifier**: Server-side classification using BPM + key + spectral data → detects moods (Aggressive, Euphoric, Energetic, Tense, Groovy, Melancholic, Calm, Dreamy) with confidence scores, suggests genre + sub-genre, provides 5-axis mood dimension radar chart (Energy, Aggression, Euphoria, Tension, Calmness), and lists sonic characteristics
 - **Playlist / Batch Analysis**: Paste multiple URLs (one per line) → parallel analysis of up to 20 tracks, with sortable results
 - **Lyrics Studio** (`/lyrics/:id`): Fetch real lyrics (via lyrics.ovh API) → animated line-by-line display with:
   - 6 animation styles: Fade Up, Slide Right, Typewriter, Glow, Pop, Blur In
@@ -49,7 +50,7 @@ A professional music analysis web application targeting music producers, video e
 - **Animation easing**: Framer Motion with `[0.22, 1, 0.36, 1]` (smooth spring-like), delays staggered at 0.05s intervals
 
 ### Database Schema
-- `analyses` table: stores all music analysis results with URL, title, BPM, key, energy, danceability, dominant frequency, frequency spectrum (JSONB), beat pattern (JSONB), tempo changes (JSONB), cellular resonance (JSONB)
+- `analyses` table: stores all music analysis results with URL, title, BPM, key, energy, danceability, dominant frequency, frequency spectrum (JSONB), beat pattern (JSONB), tempo changes (JSONB), cellular resonance (JSONB), mood_genre (JSONB, nullable — added for Mood & Genre Classifier)
 
 ### API Endpoints
 - `POST /api/analyze` — Analyze a single music URL

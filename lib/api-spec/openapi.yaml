@@ -283,6 +283,8 @@ components:
             $ref: "#/components/schemas/TempoChange"
         cellularResonance:
           $ref: "#/components/schemas/CellularResonance"
+        moodGenre:
+          $ref: "#/components/schemas/MoodGenre"
         createdAt:
           type: string
           format: date-time
@@ -370,6 +372,71 @@ components:
         - name
         - presence
         - benefit
+    MoodDimensions:
+      type: object
+      properties:
+        energy:
+          type: number
+          description: Energy dimension 0-1
+        aggression:
+          type: number
+          description: Aggression dimension 0-1
+        euphoria:
+          type: number
+          description: Euphoria dimension 0-1
+        tension:
+          type: number
+          description: Tension dimension 0-1
+        calmness:
+          type: number
+          description: Calmness dimension 0-1
+      required:
+        - energy
+        - aggression
+        - euphoria
+        - tension
+        - calmness
+    MoodGenre:
+      type: object
+      properties:
+        mood:
+          type: string
+          description: Primary detected mood (e.g. Energetic, Calm, Aggressive, Euphoric)
+        moodEmoji:
+          type: string
+          description: Emoji representing the mood
+        moodConfidence:
+          type: number
+          description: Mood detection confidence 0-1
+        moodDescription:
+          type: string
+          description: Human-readable description of the detected mood
+        genre:
+          type: string
+          description: Suggested primary genre (e.g. EDM, Jazz, Lo-Fi)
+        subGenre:
+          type: string
+          description: Suggested sub-genre
+        genreConfidence:
+          type: number
+          description: Genre detection confidence 0-1
+        characteristics:
+          type: array
+          items:
+            type: string
+          description: Key sonic characteristics of the track
+        moodDimensions:
+          $ref: "#/components/schemas/MoodDimensions"
+      required:
+        - mood
+        - moodEmoji
+        - moodConfidence
+        - moodDescription
+        - genre
+        - subGenre
+        - genreConfidence
+        - characteristics
+        - moodDimensions
     MusicAnalysisSummary:
       type: object
       properties:

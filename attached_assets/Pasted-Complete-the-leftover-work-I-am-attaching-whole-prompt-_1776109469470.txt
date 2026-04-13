@@ -1,0 +1,13 @@
+Complete the leftover work I am attaching whole prompt analysis which is done in file and folder if it is done so go ahead for leftover work I have two prompt first main and second topic name you have do only that topic which is mentioned in main prompt.
+Main prompt: First fix the dark mode, it is getting too dark in dark mode and second fix the card in home page why that card board is black make high level card redesign all cards. But like i paid $100k for just cards upgrade. Why the that physic wave length animation is existing in website. Add lyrics sync plus timestamps and shareable analysis cards and mood& genres classifier. Do as much you can understand the replit agent limit or when your going to reach it just create a prompt for leftover work which i told you. Plus create readme file and add some professional image in readme if possible. And remove replit words from whole website and every single file. Fix the download lyric issue and use gradient colour in cards home pages. And tell me can we add play song in the website by pasting link or playlist, if it is possible so do it.
+Topic prompt: Mood & Genre Classifier — detect if a track is energetic/calm/aggressive/euphoric based on BPM + key + spectral data, and suggest a genre (lo-fi, EDM, jazz, etc.)
+
+Track Comparison Mode — analyze two URLs side by side with a radar/spider chart comparing BPM, energy, resonance, key compatibility — great for DJs
+
+Shareable Analysis Cards — generate a beautiful PNG image card from any analysis (like Spotify Wrapped cards) that users can share to social media
+
+Resonance Playlist Builder — input a "target resonance score" (e.g. 80+) and batch-analyze a list, filtering only tracks that hit the threshold
+
+Lyrics Sync + Timestamps — add a timed lyrics mode where users can manually tap timestamps for each line and export a properly synced .srt subtitle file
+
+Favorites / Bookmarks — let users star analyses and create named collections (e.g. "High Energy Workout", "432Hz Healing") stored in the database.
