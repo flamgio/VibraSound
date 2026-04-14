@@ -113,33 +113,6 @@ export function AnimatedBackground() {
       }
     };
 
-    const drawSpectrum = () => {
-      const dark = isDark();
-      const barCount = 90;
-      const barW = W / barCount;
-      const baseY = H;
-      for (let i = 0; i < barCount; i++) {
-        const nx = i / barCount;
-        const h =
-          (Math.sin(t * 0.8 + nx * 7 + i * 0.35) * 0.5 + 0.5) * 28
-          + (Math.sin(t * 0.45 + nx * 13 + i * 0.18) * 0.3 + 0.3) * 18
-          + (Math.sin(t * 1.2 + nx * 3.5) * 0.2 + 0.2) * 12
-          + 3;
-        const hue = 220 + nx * 100;
-        const alpha = dark ? 0.24 : 0.1;
-        const x = i * barW + barW * 0.12;
-        const w = barW * 0.78;
-        const grad = ctx.createLinearGradient(0, baseY, 0, baseY - h);
-        grad.addColorStop(0, `hsla(${hue}, 85%, ${dark ? 68 : 50}%, 0)`);
-        grad.addColorStop(0.4, `hsla(${hue}, 85%, ${dark ? 68 : 50}%, ${alpha * 0.5})`);
-        grad.addColorStop(1, `hsla(${hue}, 85%, ${dark ? 68 : 50}%, ${alpha})`);
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.roundRect(x, baseY - h, w, h, 2);
-        ctx.fill();
-      }
-    };
-
     const drawScanLine = () => {
       if (!isDark()) return;
       const progress = ((t * 0.35) % (H + 160)) - 80;
@@ -159,7 +132,6 @@ export function AnimatedBackground() {
       drawScanLine();
       spawnParticle();
       drawParticles();
-      drawSpectrum();
       raf = requestAnimationFrame(render);
     };
 

@@ -44,7 +44,7 @@ A professional music analysis web application targeting music producers, video e
 - **Card system**: `.vb-card` — gradient border via CSS mask trick + corner highlight; `.vb-metric` — 1.5px colored top accent line via `--metric-line` CSS variable
 - **Typography utilities**: `.gradient-text` (violet→cyan), `.gradient-text-v2/gold/mint/cyan`, `.data-num` (JetBrains Mono tabular), `.label-xs/sm` (uppercase mono labels)
 - **Glow utilities**: `.glow-violet/cyan/mint/amber/rose` (box-shadow glows)
-- **Animated background**: aurora radial gradient orbs (4 orbs), sine wave lines (4 waves), floating particles, spectrum bars at bottom, scan line in dark mode, dot grid
+- **Animated background**: aurora radial gradient orbs (4 orbs), floating particles, scan line in dark mode, dot grid (all wave/spectrum bar animations removed)
 - **Button**: `.btn-glow` — top highlight + bottom glow shadow effect
 - **Custom icons**: All redesigned with 1.5px stroke weight in `components/icons.tsx`
 - **Animation easing**: Framer Motion with `[0.22, 1, 0.36, 1]` (smooth spring-like), delays staggered at 0.05s intervals
